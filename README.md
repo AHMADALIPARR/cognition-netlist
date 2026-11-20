@@ -21,6 +21,7 @@ This repository contains two complementary artifacts:
 | `verilog/gf_topological_dag.v` | Synthesizable digital Verilog RTL + self-checking testbench (GF(2⁴) DAG) |
 | `verilog-a/gf_topological_dag.va` | Verilog-A continuous-time behavioral model of the same DAG |
 | `verilog-a/cognitive_poly_cell.va` | Verilog-A cubic polynomial cell (double-well memory / gradient flow) |
+| `verilog-a/tb_cognitive_poly_cell.va` | Verification harness: KCL/Lyapunov energy, hysteresis sweep, F₂ basin readout |
 | `LICENSE` | Full AGPLv3 text |
 
 ---
@@ -95,6 +96,7 @@ The self-checking testbench injects a bulk fault and asserts that the syndrome b
 **Files:**
 - `verilog-a/gf_topological_dag.va` — continuous analog version of the GF(2⁴) DAG using smooth tanh soft-bits and first-order RC relaxation.
 - `verilog-a/cognitive_poly_cell.va` — single cubic polynomial cell.
+- `verilog-a/tb_cognitive_poly_cell.va` — verification harness that instantiates the cell, applies a piecewise-linear hysteresis stimulus sweep across ±0.6 V (beyond the critical bifurcation voltage), monitors the Lyapunov potential energy, produces a soft F₂ binary readout, and asserts boundedness (divergence check).
 
 ### Physical & ODE verification (cognitive_poly_cell)
 
@@ -116,7 +118,7 @@ At \( V_{\text{stim}} = 0 \), RK4 integration and Jacobian analysis confirm two 
 |V_{\text{stim}}| = \frac{2}{3\sqrt{3}} \approx 0.3849\,\text{V}
 \]
 
-(observed numerically at \( \pm 0.4000\,\text{V} \)).
+(observed numerically at \( \pm 0.4000\,\text{V} \)). The testbench uses `v_crit = 0.384900179` and sweeps ±0.6 V to exercise the full hysteresis loop.
 
 ### Why ML is used here
 
@@ -128,7 +130,7 @@ When many `cognitive_poly_cell` nodes are coupled in a Ramanujan-expander topolo
 
 ### Why formal verification remains essential
 
-ML surrogates can extrapolate poorly outside their training basins. Pairing ML with classical KCL / Lyapunov checks — for example verifying \( b > 0 \) coercivity (\( w_3 = -968.77 < 0 \)) and boundedness in a testbench for `cognitive_poly_cell.va` — guarantees that trajectories stay finite and remain inside the intended \( \mathbb{F}_2 \) attractors.
+ML surrogates can extrapolate poorly outside their training basins. Pairing ML with classical KCL / Lyapunov checks — for example verifying \( b > 0 \) coercivity (\( w_3 = -968.77 < 0 \)) and boundedness in `tb_cognitive_poly_cell.va` — guarantees that trajectories stay finite and remain inside the intended \( \mathbb{F}_2 \) attractors. The harness emits `VERIFY_FAIL` if \( |V| > 5\,\text{V} \).
 
 ### Running the Verilog-A models
 
@@ -147,8 +149,10 @@ Typical flow (Cadence example):
 ```tcl
 // In ADE or ocean script
 ahdl_include "verilog-a/cognitive_poly_cell.va"
+ahdl_include "verilog-a/tb_cognitive_poly_cell.va"
 ahdl_include "verilog-a/gf_topological_dag.va"
-// Instantiate, set DC/transient analysis, probe syndrome_err and boundary_entropy
+// Instantiate tb_cognitive_poly_cell, run transient ~50 ms, probe
+// state_out, energy_out, binary_bit, stim_out
 ```
 
 ---
