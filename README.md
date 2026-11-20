@@ -24,6 +24,7 @@ This is a **simulation artifact**, not a biological consciousness model. Every c
 | `results.csv` | Scenario metrics: clean / noisy / node-loss structural invariants |
 | `retrieval_true.unl` / `retrieval_false.unl` | Minimal standard Unlambda decision witnesses |
 | `Makefile` | Build targets for `generate`, `verify`, `associative` |
+| `quipper/QuipperODELiquid.hs` | Quantum end: Quipper-style ODE/DAE circuit with Liquid Haskell no-cloning refinements |
 | `docs/neuron_states.svg` | Scatter plot of the 1,024 clean neuron states, generated from `clean_state.csv` |
 | `docs/robustness.svg` | Bar chart of final energy by scenario, generated from `results.csv` |
 | `verilog/gf_topological_dag.v` | Synthesizable digital Verilog RTL + self-checking testbench (GF(2⁴) DAG) |
@@ -4345,6 +4346,54 @@ flowchart LR
     P --> M
     N --> M
 ```
+
+---
+
+## Quantum end — Quipper-style circuits with Liquid Haskell no-cloning
+
+`quipper/QuipperODELiquid.hs` is the quantum end of the circuit. It maps time-stepped ODE / DAE evolution onto a Quipper-style linear quantum circuit, and it uses Liquid Haskell refinement types to statically enforce the No-Cloning Theorem.
+
+The file combines three pieces:
+
+- Discretized ODE / DAE time-stepping, including the `cognitive_poly_cell` cubic ODE `C * dV/dt = -a*V - b*V^3 + gain*V_stim` and an algebraic DAE constraint `0 = g(x, z)`. The DAE state carries a differential variable (node voltage) and an algebraic variable (boundary / parity multiplier).
+- Quipper-style quantum circuit construction: qubit allocation (`qinit0`), phase-rotation encoding of the time-stepped ODE / DAE state (`applyRz`), and CNOT (`applyCNOT`).
+- Liquid Haskell refinement types enforcing no-cloning: every `Qubit` carries a unique linear wire ID, two-qubit gates require distinct wires (`ctrl /= tgt`), and a consumed wire cannot be reused or duplicated. The `CircState` tracks live (unconsumed) wire IDs, and each gate consumes its input wires and threads fresh wire IDs for the outputs.
+
+The example runner unrolls 3 DAE time steps (dt = 10 µs) starting from V = 0.2 V, encoding each step's phase rotation and an entangling parity check into the circuit.
+
+### Verification status (honest)
+
+| Check | Result |
+|-------|--------|
+| GHC compile (`ghc 9.6.6`, type-check) | PASS |
+| Runtime execution of `runExample` (compiled binary) | PASS |
+| DAE time monotonicity (timeT = 3e-5 after 3 steps of dt = 1e-5) | PASS |
+| Linear wire threading (no wire reused, no cloning; final live wires exactly the two output qubits) | PASS |
+| Gate log (qinit, Rz, CNOT sequence) | PASS |
+| Liquid Haskell SMT verification (`liquid`, LiveQubit / Distinct / monotonic stepDAE refinements) | **NOT VERIFIED HERE** |
+| `badClone` rejection (uncomment to confirm the SMT solver rejects qubit cloning) | **NOT VERIFIED HERE** |
+
+GHC is present on this machine (via GHCup, version 9.6.6), and it type-checks the file cleanly. The Liquid Haskell pragmas are comments to GHC, so GHC verifies the plain Haskell types but not the refinements. The `liquid` tool and the Z3 SMT solver are not installed here, and there is no container runtime here, so the Liquid Haskell refinement verification was not run on this machine. Run `liquid quipper/QuipperODELiquid.hs` on a machine with Liquid Haskell and Z3 (containers available) to verify the `LiveQubit`, `Distinct`, and monotonic `stepDAE` refinements, and uncomment `badClone` to confirm the SMT solver rejects qubit cloning.
+
+The runtime run produces:
+
+```
+final DAEState: DAEState {timeT = 3.0000000000000004e-5, vState = 0.22156844314727714, zAlg = 2.143094682241587e-8}
+qSys: Qubit {qId = 9}  qAnc: Qubit {qId = 10}
+nextWire: 11
+liveWires: [9,10]
+gateLog:
+qinit |0> -> q0
+qinit |0> -> q1
+Rz(2.0712e-6) q0 -> q2
+CNOT (q2, q1) -> (q3, q4)
+Rz(2.143094682241587e-6) q3 -> q5
+CNOT (q5, q4) -> (q6, q7)
+Rz(2.2156844314727716e-6) q6 -> q8
+CNOT (q8, q7) -> (q9, q10)
+```
+
+The Rz angles are `dt * vState` at each step, and each gate consumes its input wires and produces fresh ones, so the final live wires are exactly the two output qubits (q9, q10) and `nextWire` is 11. The runtime behavior confirms the linear threading. The static no-cloning guarantee itself rests on the Liquid Haskell refinements, which await the `liquid` run above.
 
 ---
 
