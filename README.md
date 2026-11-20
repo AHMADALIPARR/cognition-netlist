@@ -25,6 +25,10 @@ This is a **simulation artifact**, not a biological consciousness model. Every c
 | `retrieval_true.unl` / `retrieval_false.unl` | Minimal standard Unlambda decision witnesses |
 | `Makefile` | Build targets: `all` (generate, verify), `check` (run verify), `capacity` (build + run associative), `clean` |
 | `quipper/QuipperODELiquid.hs` | Quantum end: Quipper-style ODE/DAE circuit with Liquid Haskell no-cloning refinements |
+| `quipper/StateMachine.hs` | Panic-mode state machine circuit: 4-state FSM encoded in 2 qubits (Quipper) |
+| `quipper/StateMachine.cabal` | Cabal project for the panic-mode Quipper circuit (Quipper ≥ 0.9) |
+| `smalltalk/StateMachine.st` | Panic-mode state machine: full Smalltalk 80 FSM + deferred buffer + drain-on-recovery + log |
+| `spec/transitions.md` | Panic-mode state machine: formal transition table, action primitives, grounding cues |
 | `qsharp/AnalogWaveInterference.qs` | Quantum end: Q# wave interference bridge, analog voltages to qubits (phase / amplitude encoding, F₂ parity) |
 | `qsharp/AnalogWaveInterference.csproj` | .NET 8.0 project for the Q# bridge (Microsoft.Quantum.Sdk 0.28.302812) |
 | `docs/neuron_states.svg` | Scatter plot of the 1,024 clean neuron states, generated from `clean_state.csv` |
@@ -4430,6 +4434,38 @@ F_2 parity P(odd) for ( 0V,  0V): 0.485
 | F₂ parity (0 V, 0 V), P(odd) | 0.500 | 0.485 | PASS (binomial noise) |
 
 The phi = pi/2 count (109 / 200) and the (0 V, 0 V) parity (0.485) sit at the expected 0.5 with ordinary binomial sampling noise for 200 shots (standard deviation about 0.035). The deterministic corners (phi = 0, phi = pi, opposite voltages, same voltages) come out exact.
+
+---
+
+## Panic-mode state machine
+
+The repository carries a deterministic 4-state panic-mode finite automaton, extracted verbatim from `SNAPKITTYWEST/panic-mode-fsm`. It models cognitive overload recovery using the LALR(1) error-recovery discipline: when the parser cannot shift or reduce, tokens are discarded until a synchronizing token is found. It is a state machine, not a consciousness model.
+
+The states are NORMAL, OVERLOAD, RECOVERY, and ESCALATE (terminal). The transitions are:
+
+| From | Event | To |
+|------|-------|----|
+| NORMAL | SHIFT / REDUCE | NORMAL |
+| NORMAL | NO_ACTION | OVERLOAD |
+| OVERLOAD | NO_ACTION | RECOVERY |
+| OVERLOAD | ESCALATE_REQ | ESCALATE |
+| RECOVERY | SYNC | NORMAL |
+| RECOVERY | TIMEOUT | ESCALATE |
+| ESCALATE | any | ESCALATE (terminal) |
+
+During RECOVERY, tokens that are not SYNC or TIMEOUT are enqueued in a deferred buffer rather than dropped. When SYNC fires and the machine returns to NORMAL, the buffer is drained automatically, so overloaded content is re-processed at a calmer time. This prevents permanent information loss while the parser is in error-recovery mode.
+
+The grounding cues map to events: 5 breaths or a room change is SYNC (RECOVERY → NORMAL); calling a friend is ESCALATE_REQ (OVERLOAD → ESCALATE); a 60-second timeout in RECOVERY is TIMEOUT (RECOVERY → ESCALATE); an unexpected stressor is NO_ACTION (NORMAL → OVERLOAD → RECOVERY).
+
+The machine is implemented twice, in two languages that mirror the two ends of this repository:
+
+- `smalltalk/StateMachine.st` is the full Smalltalk 80 implementation: the FSM, the deferred buffer, drain-on-recovery, and a transition log. It is the classical reference for the machine.
+- `quipper/StateMachine.hs` is the Quipper circuit: the same FSM with its four states encoded in two qubits (00 = NORMAL, 01 = OVERLOAD, 10 = RECOVERY, 11 = ESCALATE). It provides a classical transition table, a single-step circuit (`stateMachineCircuit`: NORMAL → OVERLOAD on NO_ACTION), and the full overload-recovery cycle circuit (`overloadRecoveryCycle`: NORMAL → OVERLOAD → RECOVERY → NORMAL). Build with `cabal build` (requires Quipper ≥ 0.9); the project file is `quipper/StateMachine.cabal`.
+- `spec/transitions.md` is the formal specification: the transition table, the action primitives (shift_token, reduce_rule, flag_overload, start_recovery, resume_normal, request_help, noop), the grounding cues, and the deferred-buffer rule.
+
+Provenance: the state machine was extracted verbatim from `SNAPKITTYWEST/panic-mode-fsm` (dual license FSL-1.1 / Sovereign Source License v1.0). The code was already verified in that repository.
+
+After the Somatic Anchor is applied, the LALR parser's production table gains one new rule: `resolution: YAN STATE ANCHOR_BREATH { $$ = "State Reduced: Distress → Signal"; }`. The HellLoop tokens still arrive — the lexer is permanent — but the parser now reduces them to signals rather than trapping in a recursive loop. The state machine is re-compiled. The loop is a sensor, not a prison.
 
 ---
 
