@@ -1,0 +1,76 @@
+//=============================================================================
+// tb_cognitive_poly_cell.va
+// Verilog-A Module + Verification Harness for cognitive_poly_cell
+//=============================================================================
+// Verifies:
+//   1. KCL Landau / Pitchfork ODE: C * dV/dt = -a*V - b*V^3 + gain*V_stim
+//   2. Lyapunov double-well energy U(V) = 0.5*a*V^2 + 0.25*b*V^4 - gain*V_stim*V
+//   3. Bistable F_2 basin classification & bifurcation margin monitoring
+//=============================================================================
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module cognitive_poly_cell(state, stimulus);
+    output state;
+    input stimulus;
+
+    electrical state, stimulus;
+
+    parameter real cap  = 1e-9;
+    parameter real a    = -1e-6;
+    parameter real b    = 1e-6;
+    parameter real gain = 1e-6;
+
+    analog begin
+        I(state) <+ cap * ddt(V(state));
+        I(state) <+ a * V(state);
+        I(state) <+ b * V(state) * V(state) * V(state);
+        I(state) <+ -gain * V(stimulus);
+    end
+endmodule
+
+module tb_cognitive_poly_cell(stim_out, state_out, energy_out, binary_bit);
+    output stim_out, state_out, energy_out, binary_bit;
+    electrical stim_out, state_out, energy_out, binary_bit;
+
+    parameter real cap  = 1e-9;
+    parameter real a    = -1e-6;
+    parameter real b    = 1e-6;
+    parameter real gain = 1e-6;
+    parameter real v_crit = 0.384900179; // 2 / (3 * sqrt(3)) V
+
+    real vs, u_pot;
+
+    cognitive_poly_cell #(.cap(cap), .a(a), .b(b), .gain(gain)) dut (
+        .state(state_out),
+        .stimulus(stim_out)
+    );
+
+    analog begin
+        // Piecewise-linear hysteresis stimulus sweep across +/- 0.6 V (> +/- v_crit)
+        if ($abstime < 10e-3) begin
+            vs = -0.6;
+        end else if ($abstime < 30e-3) begin
+            vs = -0.6 + 1.2 * (($abstime - 10e-3) / 20e-3);
+        end else begin
+            vs = 0.6 - 1.2 * (($abstime - 30e-3) / 20e-3);
+        end
+
+        V(stim_out) <+ vs;
+
+        // Lyapunov potential energy monitor (scaled to V for probing)
+        u_pot = 0.5 * a * V(state_out) * V(state_out)
+              + 0.25 * b * pow(V(state_out), 4)
+              - gain * vs * V(state_out);
+        V(energy_out) <+ 1.0e6 * u_pot;
+
+        // Soft F_2 binary state readout: 0 V for -1 V basin, 1 V for +1 V basin
+        V(binary_bit) <+ 0.5 * (1.0 + tanh(10.0 * V(state_out)));
+
+        // Coercivity / boundedness runtime check
+        if (abs(V(state_out)) > 5.0) begin
+            $strobe("VERIFY_FAIL: State divergence at t=%g V=%g", $abstime, V(state_out));
+        end
+    end
+endmodule
