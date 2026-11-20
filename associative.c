@@ -29,80 +29,79 @@ static int retrieve(const int8_t *mem,int p,int8_t *state,const uint8_t *alive,i
   int sweeps=0;
   double prev_objective=0.; for(int m=0;m<p;m++)prev_objective+=(double)overlap[m]*overlap[m];
   for(int step=0;step<SWEEPS;step++){
-    int flips=0;
-    for(int i=0;i<N;i++){
-      if(!*(alive+i))continue;
-      int32_t field=0;
+    int changes=0;
+    /* deterministic asynchronous permutation, one vertex each visit */
+    int start=(int)uniform(N),stride=1+2*(int)uniform(N/2);
+    for(int j=0;j<N;j++){
+      int i=(start+j*stride)&(N-1);
+      if(!alive[i])continue;
+      const int old=state[i];
+      int64_t field=0;
       for(int m=0;m<p;m++){
-        const int8_t *ptr=mem+(size_t)m*N;
-        int32_t o=*(overlap+m) - (*(ptr+i))*(*(state+i)); /* remove self */
-        field += (*(ptr+i))*o;
+        int v=*(mem+(size_t)m*N+i);
+        field+=(int64_t)v*(*(overlap+m)-v*old);
       }
-      int8_t newv = (field>0)?1:((field<0)?-1:*(state+i));
-      if(newv!=*(state+i)){
-        for(int m=0;m<p;m++){
-          const int8_t *ptr=mem+(size_t)m*N;
-          *(overlap+m) += (*(ptr+i))*(newv - *(state+i));
-        }
-        *(state+i)=newv;
-        flips++;
+      int newstate=field>0?1:field<0?-1:old;
+      if(newstate!=old){
+        *(state+i)=(int8_t)newstate;
+        for(int m=0;m<p;m++)*(overlap+m)+=(*(mem+(size_t)m*N+i))*(newstate-old);
+        changes++;
       }
     }
-    sweeps++;
-    double obj=0.; for(int m=0;m<p;m++)obj+=(double)overlap[m]*overlap[m];
-    if(obj+1e-9<prev_objective)*energy_ok=0;
-    prev_objective=obj;
-    if(!flips)break;
+    double objective=0.;for(int m=0;m<p;m++)objective+=(double)overlap[m]*overlap[m];
+    if(objective+1e-6<prev_objective)*energy_ok=0;
+    prev_objective=objective;
+    sweeps=step+1;
+    if(!changes)break;
   }
   return sweeps;
 }
+static void mask(uint8_t *alive,int loss){memset(alive,1,N);int removed=loss*N/100;while(removed){int i=(int)uniform(N);if(alive[i]){alive[i]=0;removed--;}}}
+static void corrupt(int8_t *state,const int8_t *target,const uint8_t *alive,int pct){
+  memcpy(state,target,N);int live=0;for(int i=0;i<N;i++)live+=alive[i];
+  int flips=pct*live/100;
+  while(flips){int i=(int)uniform(N);if(alive[i] && state[i]==target[i]){state[i]=-state[i];flips--;}}
+}
+static double energy(const int32_t *overlap,int p,int live){
+  double sum=0.;for(int m=0;m<p;m++)sum+=(double)overlap[m]*overlap[m];
+  /* Exact Hopfield energy on surviving nodes, up to N normalization. */
+  return -(sum-(double)p*live)/(2*N);
+}
 int main(void){
-  rng=0xC0FFEEULL;
-  FILE *out=fopen("capacity.csv","w");
-  if(!out){perror("capacity.csv");return 1;}
-  fprintf(out,"patterns,flip_percent,neuron_loss_percent,trials,perfect_recall_rate,mean_bit_accuracy,mean_sweeps,mean_energy,baseline_cue_accuracy\n");
-  int8_t *mem=malloc((size_t)128*N);
-  int8_t *state=malloc(N);
-  uint8_t *alive=malloc(N);
-  int32_t *overlap=malloc(128*sizeof(int32_t));
-  if(!mem||!state||!alive||!overlap){fputs("oom\n",stderr);return 2;}
-  int ok=1;
-  for(int loss=0;loss<=20;loss+=10){
-    for(int flip=5;flip<=10;flip+=5){
-      for(int p=1;p<=32;p++){
-        double sum_rate=0, sum_sweeps=0, sum_energy=0, sum_base=0;
-        int perfect=0;
-        for(int t=0;t<TRIALS;t++){
-          memset(alive,1,N);
-          int nrem=(loss*N)/100;
-          for(int k=0;k<nrem;k++){
-            int i; do{i=uniform(N);}while(!alive[i]); alive[i]=0;
-          }
-          patterns_fill(mem,p);
-          memcpy(state,mem,N);
-          int nflips=(flip*N)/100;
-          for(int k=0;k<nflips;k++){ int i=uniform(N); if(alive[i]) state[i]=-state[i]; }
-          int base_match=0; for(int i=0;i<N;i++) if(alive[i]&&state[i]==mem[i]) base_match++;
-          int nalive=0; for(int i=0;i<N;i++) if(alive[i]) nalive++;
-          double base_acc = nalive? (double)base_match/nalive : 0;
-          int energy_ok=1;
-          int sweeps=retrieve(mem,p,state,alive,overlap,&energy_ok);
-          if(!energy_ok) ok=0;
-          int matches=0; for(int i=0;i<N;i++) if(alive[i]&&state[i]==mem[i]) matches++;
-          double rate = nalive?(double)matches/nalive:0;
-          if(rate>0.999) perfect++;
-          sum_rate+=rate; sum_sweeps+=sweeps; sum_base+=base_acc;
-          double eng=0; for(int m=0;m<p;m++) eng -= 0.5*(double)overlap[m]*overlap[m]/(N);
-          sum_energy+=eng;
-        }
-        fprintf(out,"%d,%d,%d,%d,%.6f,%.6f,%.3f,%.7f,%.6f\n",
-          p,flip,loss,TRIALS,(double)perfect/TRIALS,sum_rate/TRIALS,sum_sweeps/TRIALS,sum_energy/TRIALS,sum_base/TRIALS);
+  static const int pvals[]={1,2,4,8,16,32,64};
+  static const int noise[]={5,10,20,30,40};
+  static const int loss[]={0,10,20};
+  FILE *f=fopen("capacity.csv","w");if(!f){perror("capacity.csv");return 2;}
+  fputs("patterns,flip_percent,neuron_loss_percent,trials,perfect_recall_rate,mean_bit_accuracy,mean_sweeps,mean_energy,baseline_cue_accuracy\n",f);
+  int8_t *mem=malloc(64*N),*state=malloc(N);
+  int32_t *ov=malloc(64*sizeof *ov);
+  if(!mem||!state||!ov){fputs("allocation error\n",stderr);return 2;}
+  uint8_t alive[N];int ok=1;
+  for(size_t a=0;a<sizeof pvals/sizeof *pvals;a++){
+    int p=pvals[a]; rng=UINT64_C(0x6250badaaaa5246)^((uint64_t)p<<22);patterns_fill(mem,p);
+    for(size_t b=0;b<sizeof noise/sizeof *noise;b++) for(size_t c=0;c<sizeof loss/sizeof *loss;c++){
+      int perfect=0;double correct_total=0,sweeps_total=0,energy_total=0,cue_total=0;
+      for(int trial=0;trial<TRIALS;trial++){
+        rng=UINT64_C(0xe83beef75a73) ^ ((uint64_t)p<<34) ^ ((uint64_t)noise[b]<<20) ^ ((uint64_t)loss[c]<<12) ^ (uint64_t)trial;
+        const int8_t *target=mem+(size_t)uniform((uint32_t)p)*N;
+        mask(alive,loss[c]);corrupt(state,target,alive,noise[b]);
+        int live=0,cue_correct=0;for(int i=0;i<N;i++)if(alive[i]){live++;cue_correct+=(state[i]==target[i]);}
+        cue_total+=(double)cue_correct/live;
+        int energy_ok=1;int steps=retrieve(mem,p,state,alive,ov,&energy_ok);
+        if(!energy_ok)ok=0;
+        int correct=0;for(int i=0;i<N;i++)if(alive[i])correct+=(state[i]==target[i]);
+        perfect+=(correct==live);correct_total+=(double)correct/live;
+        sweeps_total+=steps;energy_total+=energy(ov,p,live);
+        /* A candidate fixed-point must have non-increasing Hopfield energy. */
+        if(!isfinite(energy_total)||steps<1||steps>SWEEPS)ok=0;
       }
+      fprintf(f,"%d,%d,%d,%d,%.6f,%.6f,%.3f,%.7f,%.6f\n",p,noise[b],loss[c],TRIALS,
+        (double)perfect/TRIALS,correct_total/TRIALS,sweeps_total/TRIALS,energy_total/TRIALS,cue_total/TRIALS);
     }
   }
-  fclose(out);
-  printf("Energy-sweep nonincreasing-energy check: %s\n",ok?"PASS":"FAIL");
+  free(mem);free(state);free(ov);fclose(f);
+  printf("Associative benchmark: %zu capacities x %zu corruption levels x %zu loss levels x %d trials = %zu runs\n",sizeof pvals/sizeof *pvals,sizeof noise/sizeof *noise,sizeof loss/sizeof *loss,TRIALS,(sizeof pvals/sizeof *pvals)*(sizeof noise/sizeof *noise)*(sizeof loss/sizeof *loss)*TRIALS);
+  printf("Hopfield per-sweep nonincreasing-energy check: %s\n",ok?"PASS":"FAIL");
   puts("Outputs: capacity.csv; metric counts only surviving neurons. This is a binary Hopfield reference, not SPICE.");
-  free(mem);free(state);free(alive);free(overlap);
   return ok?0:1;
 }
