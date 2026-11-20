@@ -25,6 +25,8 @@ This is a **simulation artifact**, not a biological consciousness model. Every c
 | `retrieval_true.unl` / `retrieval_false.unl` | Minimal standard Unlambda decision witnesses |
 | `Makefile` | Build targets for `generate`, `verify`, `associative` |
 | `quipper/QuipperODELiquid.hs` | Quantum end: Quipper-style ODE/DAE circuit with Liquid Haskell no-cloning refinements |
+| `qsharp/AnalogWaveInterference.qs` | Quantum end: Q# wave interference bridge, analog voltages to qubits (phase / amplitude encoding, F₂ parity) |
+| `qsharp/AnalogWaveInterference.csproj` | .NET 8.0 project for the Q# bridge (Microsoft.Quantum.Sdk 0.28.302812) |
 | `docs/neuron_states.svg` | Scatter plot of the 1,024 clean neuron states, generated from `clean_state.csv` |
 | `docs/robustness.svg` | Bar chart of final energy by scenario, generated from `results.csv` |
 | `verilog/gf_topological_dag.v` | Synthesizable digital Verilog RTL + self-checking testbench (GF(2⁴) DAG) |
@@ -4394,6 +4396,40 @@ CNOT (q8, q7) -> (q9, q10)
 ```
 
 The Rz angles are `dt * vState` at each step, and each gate consumes its input wires and produces fresh ones, so the final live wires are exactly the two output qubits (q9, q10) and `nextWire` is 11. The runtime behavior confirms the linear threading. The static no-cloning guarantee itself rests on the Liquid Haskell refinements, which await the `liquid` run above.
+
+---
+
+## Q# wave interference bridge — analog voltages to qubits
+
+`qsharp/AnalogWaveInterference.qs` is the second quantum end of the circuit. It is a Q# wave and quantum interference bridge that connects analog ODE voltage states (`cognitive_poly_cell`) to qubits through phase / amplitude encoding and interferometry.
+
+It maps a normalized analog voltage `vState` in [-1.0, +1.0] V to a Bloch polar angle `theta` in [0, pi]: +1.0 V maps to theta = 0 (the |0> basin), 0.0 V maps to theta = pi/2 (the |+> saddle superposition), and -1.0 V maps to theta = pi (the |1> basin). The voltage is encoded onto a qubit with `Ry(theta)`. A single-qubit Mach-Zehnder / Ramsey interferometer (H, Rz(phi), H) measures the analog-driven phase, with `P(|0>) = cos²(phi / 2)` and `P(|1>) = sin²(phi / 2)`. A two-node operation encodes two analog cell voltages, entangles them with CNOT, and measures the F₂ parity (vA XOR vB) in the interference basis.
+
+The entry point sweeps the interferometer phase over {0, pi/2, pi} at 200 shots each, and measures the F₂ parity for the voltage pairs (+1 V, -1 V), (+1 V, +1 V), and (0 V, 0 V) at 200 shots each. The project file `qsharp/AnalogWaveInterference.csproj` targets .NET 8.0 with Microsoft.Quantum.Sdk 0.28.302812, and the program runs with `dotnet run` (with `DOTNET_ROLL_FORWARD=LatestMajor`, because the SDK 0.28 build tools target .NET 6.0).
+
+### Verification status (verified by execution)
+
+The Q# program was built and run on this machine with .NET SDK 8.0.428 and Microsoft.Quantum.Sdk 0.28.302812. The output matches the theory exactly:
+
+```
+Interference phi=0:    |0>=200, |1>=0 (constructive |0>)
+Interference phi=pi/2: |0>=109, |1>=91 (50/50 quadrature)
+Interference phi=pi:   |0>=0, |1>=200 (destructive |0> -> |1>)
+F_2 parity P(odd) for (+1V, -1V): 1
+F_2 parity P(odd) for (+1V, +1V): 0
+F_2 parity P(odd) for ( 0V,  0V): 0.485
+```
+
+| Check | Expected | Measured | Result |
+|-------|----------|----------|--------|
+| Interference phi = 0, P(\|0>) | 1.000 (cos² 0) | 200 / 200 = 1.000 | PASS |
+| Interference phi = pi/2, P(\|0>) | 0.500 (cos² pi/4) | 109 / 200 = 0.545 | PASS (binomial noise) |
+| Interference phi = pi, P(\|0>) | 0.000 (cos² pi/2) | 0 / 200 = 0.000 | PASS |
+| F₂ parity (+1 V, -1 V), P(odd) | 1.000 | 1.000 | PASS |
+| F₂ parity (+1 V, +1 V), P(odd) | 0.000 | 0.000 | PASS |
+| F₂ parity (0 V, 0 V), P(odd) | 0.500 | 0.485 | PASS (binomial noise) |
+
+The phi = pi/2 count (109 / 200) and the (0 V, 0 V) parity (0.485) sit at the expected 0.5 with ordinary binomial sampling noise for 200 shots (standard deviation about 0.035). The deterministic corners (phi = 0, phi = pi, opposite voltages, same voltages) come out exact.
 
 ---
 
