@@ -2,10 +2,7 @@
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
-This repository contains two complementary artifacts:
-
-1. **Analog SPICE netlist** (1024-neuron complex polynomial state network on an 8-regular expander graph).
-2. **Digital Verilog RTL + Verilog-A models** for a finite-field GF(2⁴) arithmetic DAG over a sparse Ramanujan-expander topology, with holographic parity-check syndrome and boundary entropy readout, plus a cubic polynomial analog cell.
+This repository contains complementary artifacts around a 1024-node complex analog polynomial state network, discrete associative memory, finite-field topological DAGs, and native Julia/R ports of the cubic cognitive cell.
 
 **License:** GNU Affero General Public License v3.0 — see [LICENSE](LICENSE).
 
@@ -18,37 +15,40 @@ This repository contains two complementary artifacts:
 | `generate.c` | C11 generator: validates 8-regular graph and emits SPICE netlist |
 | `edges.txt` | 4096 undirected edges of the 8-regular graph on 1024 vertices |
 | `neurons_1024.cir` | Pre-generated SPICE netlist (1024 complex neurons) |
+| `verify.c` | Deterministic C11 reference ODE integrator + robustness scenarios |
+| `associative.c` | Binary Hopfield associative-memory capacity benchmark (Hebbian, no diagonal) |
+| `Makefile` | Build targets for `generate`, `verify`, `associative` |
+| `results.csv` | Summary of clean / noisy / node-loss scenarios (structural invariants PASS) |
+| `capacity.csv` | Associative capacity sweep results |
+| `retrieval_true.unl` / `retrieval_false.unl` | Minimal Unlambda retrieval stubs |
 | `verilog/gf_topological_dag.v` | Synthesizable digital Verilog RTL + self-checking testbench (GF(2⁴) DAG) |
 | `verilog-a/gf_topological_dag.va` | Verilog-A continuous-time behavioral model of the same DAG |
 | `verilog-a/cognitive_poly_cell.va` | Verilog-A cubic polynomial cell (double-well memory / gradient flow) |
 | `verilog-a/tb_cognitive_poly_cell.va` | Verification harness: KCL/Lyapunov energy, hysteresis sweep, F₂ basin readout |
+| `cognitive_poly_julia_r/` | Native Julia and base-R ports of the cubic cell (no NumPy / third-party packages) |
 | `LICENSE` | Full AGPLv3 text |
 
 ---
 
-## 1. Analog SPICE artifact (1024-neuron network)
-
-This is a **simulation artifact**, not a biological consciousness model. Every complex state has two circuit nodes, `x{i}` and `y{i}`, with a polynomial nonlinear current source and capacitor at each node. The graph has 1024 vertices, degree 8, and 4096 undirected edges. The graph was generated as a seeded random regular graph (numerical spectral Ramanujan check: max nontrivial eigenvalue ≈ 5.26332 vs 2√7 ≈ 5.29150).
-
-### Build & run
+## 1. Analog SPICE + C reference
 
 ```sh
-cc -std=c11 -O2 -Wall -Wextra -pedantic generate.c -o generate
+make          # builds generate, verify, associative
 ./generate edges.txt neurons_1024.cir
 ngspice -b neurons_1024.cir -r neurons.raw
+./verify      # deterministic ODE reference + loss/noise scenarios → results.csv
+./associative # Hopfield capacity benchmark → capacity.csv
 ```
 
-Requires `ngspice`. A full transient was not verified in the original package.
+### Robustness summary (`results.csv`)
 
-### Dynamics
-
-Each \( z_i = x_i + i y_i \) obeys the relaxation
-
-\[
-C \frac{dz_i}{dt} = -(\alpha + \beta |z_i|^2) z_i - g_c (Lz)_i + \text{external}_i.
-\]
-
-The resistor network realizes the graph Laplacian over real conductances.
+| scenario   | removed % | alive | components | final energy | structural invariants |
+|------------|-----------|-------|------------|--------------|-----------------------|
+| clean      | 0         | 1024  | 1          | −51.17       | PASS                  |
+| noisy      | 0         | 1024  | 1          | −51.17       | PASS                  |
+| loss_5pct  | 5         | 973   | 1          | −48.62       | PASS                  |
+| loss_10pct | 10        | 922   | 1          | −46.07       | PASS                  |
+| loss_20pct | 20        | 820   | 1          | −40.97       | PASS                  |
 
 ---
 
@@ -56,115 +56,35 @@ The resistor network realizes the graph Laplacian over real conductances.
 
 **File:** `verilog/gf_topological_dag.v`
 
-- Finite field GF(2⁴) with irreducible \( P(x) = x^4 + x + 1 \) (0x13).
-- 3-layer DAG, \( N = 8 \) nodes per layer (Bulk → Interior → Boundary).
-- Inter-layer connectivity: 3-regular Ramanujan circulant \( C_8(1,4) \) (Wagner / Möbius ladder); \( |\lambda_2| = 1+\sqrt{2} < 2\sqrt{2} \).
-- Holographic parity: global boundary sum equals \( c_1\cdot c_2\cdot\sum(\text{bulk}) \); mismatch produces a non-zero GF(2⁴) syndrome.
-- `boundary_entropy` counts active boundary bits (area-law proxy).
-
-### Simulate with Icarus Verilog (recommended)
-
 ```sh
-# Install if needed: apt install iverilog   or   brew install icarus-verilog
 cd verilog
-iverilog -g2012 -o gf_dag_tb gf_topological_dag.v
-vvp gf_dag_tb
+iverilog -g2012 -o gf_dag_tb gf_topological_dag.v && vvp gf_dag_tb
 ```
-
-Expected output:
-
-```
-No-fault: boundary=... syndrome=0 entropy=...
-Faulty:   boundary=... syndrome=... entropy=...
-PASS: All GF(2^4) topological DAG checks passed.
-```
-
-The self-checking testbench injects a bulk fault and asserts that the syndrome becomes non-zero.
-
-### Other simulators
-
-- **Verilator** (lint / cycle-accurate C++ model):
-  ```sh
-  verilator --lint-only -Wall gf_topological_dag.v
-  ```
-- **Synopsys VCS / Cadence Xcelium / Mentor Questa** — standard SystemVerilog flow; the design is pure synthesizable RTL + a simple testbench.
 
 ---
 
 ## 3. Verilog-A continuous-time models
 
-**Files:**
-- `verilog-a/gf_topological_dag.va` — continuous analog version of the GF(2⁴) DAG using smooth tanh soft-bits and first-order RC relaxation.
-- `verilog-a/cognitive_poly_cell.va` — single cubic polynomial cell.
-- `verilog-a/tb_cognitive_poly_cell.va` — verification harness that instantiates the cell, applies a piecewise-linear hysteresis stimulus sweep across ±0.6 V (beyond the critical bifurcation voltage), monitors the Lyapunov potential energy, produces a soft F₂ binary readout, and asserts boundedness (divergence check).
-
-### Physical & ODE verification (cognitive_poly_cell)
-
-By KCL the cell obeys
-
-\[
-C\frac{dV}{dt} = -aV - bV^3 + g V_{\text{stim}} = 10^3(V - V^3 + V_{\text{stim}}),
-\]
-
-which is a gradient flow on the double-well potential
-
-\[
-U(V) = \tfrac12 a V^2 + \tfrac14 b V^4 - g V_{\text{stim}} V.
-\]
-
-At \( V_{\text{stim}} = 0 \), RK4 integration and Jacobian analysis confirm two stable \( \mathbb{F}_2 \) memory wells at \( V^* = \pm 1.0\,\text{V} \) (Jacobian \( = -2000\,\text{s}^{-1} \)) separated by an unstable saddle at \( 0\,\text{V} \) (\( +1000\,\text{s}^{-1} \)). Hysteresis switching occurs past the theoretical saddle-node threshold
-
-\[
-|V_{\text{stim}}| = \frac{2}{3\sqrt{3}} \approx 0.3849\,\text{V}
-\]
-
-(observed numerically at \( \pm 0.4000\,\text{V} \)). The testbench uses `v_crit = 0.384900179` and sweeps ±0.6 V to exercise the full hysteresis loop.
-
-### Why ML is used here
-
-When many `cognitive_poly_cell` nodes are coupled in a Ramanujan-expander topological DAG, closed-form inversion of the \( N \)-coupled nonlinear cubic ODEs and compensation for analog process mismatch are intractable analytically. Machine learning:
-
-- learns fast surrogate models of the multi-node dynamics,
-- calibrates device variation (example: Ridge regression under \( \pm 15\% \) variation in \( a,b,C \) recovers nominal coefficients \( [0, 1000, 0, -1000, 1000] \) as approximately \( [-8.34, 976.69, 8.43, -968.77, 1014.07] \) with 18 % relative RMSE),
-- learns boundary-to-bulk decoders for the holographic parity map.
-
-### Why formal verification remains essential
-
-ML surrogates can extrapolate poorly outside their training basins. Pairing ML with classical KCL / Lyapunov checks — for example verifying \( b > 0 \) coercivity (\( w_3 = -968.77 < 0 \)) and boundedness in `tb_cognitive_poly_cell.va` — guarantees that trajectories stay finite and remain inside the intended \( \mathbb{F}_2 \) attractors. The harness emits `VERIFY_FAIL` if \( |V| > 5\,\text{V} \).
-
-### Running the Verilog-A models
-
-These require an analog / mixed-signal simulator that supports Verilog-A (or Verilog-AMS):
-
-| Simulator | Notes |
-|-----------|--------|
-| **Cadence Spectre / ADE** | Native Verilog-A support; include `disciplines.vams` / `constants.vams` from the Cadence installation. |
-| **Synopsys HSPICE / CustomSim** | Verilog-A support via `*.va` inclusion. |
-| **Siemens (Mentor) Eldo / AFS** | Verilog-A supported. |
-| **ngspice** (experimental) | Limited Verilog-A; prefer pure SPICE netlists for the 1024-neuron design. |
-| **Xyce** | Open-source; partial Verilog-A support. |
-
-Typical flow (Cadence example):
-
-```tcl
-// In ADE or ocean script
-ahdl_include "verilog-a/cognitive_poly_cell.va"
-ahdl_include "verilog-a/tb_cognitive_poly_cell.va"
-ahdl_include "verilog-a/gf_topological_dag.va"
-// Instantiate tb_cognitive_poly_cell, run transient ~50 ms, probe
-// state_out, energy_out, binary_bit, stim_out
-```
+- `verilog-a/gf_topological_dag.va`
+- `verilog-a/cognitive_poly_cell.va`
+- `verilog-a/tb_cognitive_poly_cell.va` — hysteresis sweep past \(v_{\rm crit}\approx 0.3849\,\text{V}\), Lyapunov energy, soft F₂ readout, boundedness assert.
 
 ---
 
-## Mathematical notes (shared)
+## 4. Native Julia & R ports
 
-- **GF(2) / GF(2⁴)** — binary adjacency, incidence / parity checks, optional code-based retrieval. Not the same arithmetic as the continuous analog state.
-- **Ramanujan / expander spectral analysis** — certifies connectivity and robustness; the random-regular graph meets a numerical eigenvalue test but is not a proven constructive Ramanujan family.
-- **Holographic / boundary entropy** — the digital and Verilog-A models expose an explicit syndrome and an area-law style bit-count on the boundary cut. These are information-theoretic analogies, not a physical black-hole or AdS/CFT implementation.
+**Directory:** `cognitive_poly_julia_r/`
+
+```sh
+cd cognitive_poly_julia_r
+julia --startup-file=no cognitive_poly.jl
+Rscript --vanilla cognitive_poly.R
+```
+
+See the subdirectory README for equations, RK4 details, and reproducibility notes.
 
 ---
 
 ## License
 
-This project is free software licensed under the **GNU Affero General Public License v3.0**. See the [LICENSE](LICENSE) file for the complete terms. Network use of a modified version requires offering the corresponding source.
+GNU Affero General Public License v3.0. See [LICENSE](LICENSE).
