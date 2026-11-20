@@ -13,13 +13,10 @@ This repository contains complementary artifacts around a 1024-node complex anal
 | Path | Description |
 |------|-------------|
 | `generate.c` | C11 generator: validates 8-regular graph and emits SPICE netlist |
-| `edges.txt` | 4096 undirected edges of the 8-regular graph on 1024 vertices |
-| `neurons_1024.cir` | Pre-generated SPICE netlist (1024 complex neurons) |
 | `verify.c` | Deterministic C11 reference ODE integrator + robustness scenarios |
 | `associative.c` | Binary Hopfield associative-memory capacity benchmark (Hebbian, no diagonal) |
 | `Makefile` | Build targets for `generate`, `verify`, `associative` |
 | `results.csv` | Summary of clean / noisy / node-loss scenarios (structural invariants PASS) |
-| `capacity.csv` | Associative capacity sweep results |
 | `retrieval_true.unl` / `retrieval_false.unl` | Minimal Unlambda retrieval stubs |
 | `verilog/gf_topological_dag.v` | Synthesizable digital Verilog RTL + self-checking testbench (GF(2⁴) DAG) |
 | `verilog-a/gf_topological_dag.va` | Verilog-A continuous-time behavioral model of the same DAG |
@@ -30,14 +27,12 @@ This repository contains complementary artifacts around a 1024-node complex anal
 
 ---
 
-## 1. Analog SPICE + C reference
+## 1. Analog + C reference
 
 ```sh
 make          # builds generate, verify, associative
-./generate edges.txt neurons_1024.cir
-ngspice -b neurons_1024.cir -r neurons.raw
 ./verify      # deterministic ODE reference + loss/noise scenarios → results.csv
-./associative # Hopfield capacity benchmark → capacity.csv
+./associative # Hopfield capacity benchmark
 ```
 
 ### Robustness summary (`results.csv`)
