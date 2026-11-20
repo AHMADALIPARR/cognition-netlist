@@ -1,0 +1,5 @@
+patterns,flip_percent,neuron_loss_percent,trials,perfect_recall_rate,mean_bit_accuracy,mean_sweeps,mean_energy,baseline_cue_accuracy
+1,5,0,16,1.000000,1.000000,2.000,-511.5000000,0.950195
+1,5,10,16,1.000000,1.000000,2.000,-414.6298828,0.950108
+1,5,20,16,1.000000,1.000000,2.000,-327.9199219,0.950000
+1,10,0,16,1.000000,1.000000,2.000,-511.5000000,0.900391
