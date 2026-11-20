@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="500" viewBox="0 0 760 500">
+<rect width="760" height="500" fill="#0b1020"/>
+<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#9fb2d8"/></marker></defs>
+<text x="20" y="26" fill="#e8eefc" font-family="sans-serif" font-size="17" font-weight="bold">Panic-mode state machine: 4 states, LALR(1) error recovery</text>
+<text x="20" y="488" fill="#9fb2d8" font-family="sans-serif" font-size="12">ESCALATE is terminal (double circle). SHIFT / REDUCE loop on NORMAL.</text>
+<line x1="186.4" y1="220.5" x2="311.9" y2="140.6" stroke="#9fb2d8" stroke-width="2.0" marker-end="url(#arr)"/>
+<text x="243.2" y="172.5" fill="#9fb2d8" font-family="sans-serif" font-size="12" text-anchor="middle">NO_ACTION</text>
+<line x1="360.0" y1="165.0" x2="360.0" y2="333.0" stroke="#9fb2d8" stroke-width="2.0" marker-end="url(#arr)"/>
+<text x="422.0" y="253.0" fill="#9fb2d8" font-family="sans-serif" font-size="12" text-anchor="middle">NO_ACTION</text>
+<line x1="313.6" y1="360.5" x2="188.1" y2="280.6" stroke="#37e0a0" stroke-width="2.0" marker-end="url(#arr)"/>
+<text x="244.8" y="342.5" fill="#9fb2d8" font-family="sans-serif" font-size="12" text-anchor="middle">SYNC</text>
+<line x1="408.4" y1="136.1" x2="569.8" y2="223.0" stroke="#e03737" stroke-width="2.0" marker-end="url(#arr)"/>
+<text x="497.1" y="169.5" fill="#9fb2d8" font-family="sans-serif" font-size="12" text-anchor="middle">ESCALATE_REQ</text>
+<line x1="408.4" y1="363.9" x2="569.8" y2="277.0" stroke="#e03737" stroke-width="2.0" marker-end="url(#arr)"/>
+<text x="497.1" y="338.5" fill="#9fb2d8" font-family="sans-serif" font-size="12" text-anchor="middle">TIMEOUT</text>
+<path d="M 112 205 A 42 34 0 1 1 168 205" fill="none" stroke="#9fb2d8" stroke-width="2" marker-end="url(#arr)"/>
+<text x="140.0" y="138.0" fill="#9fb2d8" font-family="sans-serif" font-size="12" text-anchor="middle">SHIFT / REDUCE</text>
+<path d="M 592 205 A 42 34 0 1 1 648 205" fill="none" stroke="#e03737" stroke-width="2" marker-end="url(#arr)"/>
+<text x="620.0" y="138.0" fill="#9fb2d8" font-family="sans-serif" font-size="12" text-anchor="middle">terminal</text>
+<circle cx="140.0" cy="250.0" r="55.0" fill="#16213a" stroke="#37e0a0" stroke-width="2.5"/>
+<text x="140.0" y="248.0" fill="#e8eefc" font-family="sans-serif" font-size="15" font-weight="bold" text-anchor="middle">NORMAL</text>
+<text x="140.0" y="268.0" fill="#9fb2d8" font-family="sans-serif" font-size="12" text-anchor="middle">00</text>
+<circle cx="360.0" cy="110.0" r="55.0" fill="#16213a" stroke="#e0a037" stroke-width="2.5"/>
+<text x="360.0" y="108.0" fill="#e8eefc" font-family="sans-serif" font-size="15" font-weight="bold" text-anchor="middle">OVERLOAD</text>
+<text x="360.0" y="128.0" fill="#9fb2d8" font-family="sans-serif" font-size="12" text-anchor="middle">01</text>
+<circle cx="360.0" cy="390.0" r="55.0" fill="#16213a" stroke="#e0a037" stroke-width="2.5"/>
+<text x="360.0" y="388.0" fill="#e8eefc" font-family="sans-serif" font-size="15" font-weight="bold" text-anchor="middle">RECOVERY</text>
+<text x="360.0" y="408.0" fill="#9fb2d8" font-family="sans-serif" font-size="12" text-anchor="middle">10</text>
+<circle cx="620.0" cy="250.0" r="55.0" fill="#16213a" stroke="#e03737" stroke-width="2.5"/>
+<circle cx="620.0" cy="250.0" r="48.0" fill="none" stroke="#e03737" stroke-width="1.5"/>
+<text x="620.0" y="248.0" fill="#e8eefc" font-family="sans-serif" font-size="15" font-weight="bold" text-anchor="middle">ESCALATE</text>
+<text x="620.0" y="268.0" fill="#9fb2d8" font-family="sans-serif" font-size="12" text-anchor="middle">11</text>
+</svg>

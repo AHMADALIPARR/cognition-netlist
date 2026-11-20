@@ -33,6 +33,10 @@ This is a **simulation artifact**, not a biological consciousness model. Every c
 | `qsharp/AnalogWaveInterference.csproj` | .NET 8.0 project for the Q# bridge (Microsoft.Quantum.Sdk 0.28.302812) |
 | `docs/neuron_states.svg` | Scatter plot of the 1,024 clean neuron states, generated from `clean_state.csv` |
 | `docs/robustness.svg` | Bar chart of final energy by scenario, generated from `results.csv` |
+| `docs/panic_mode_states.svg` | State diagram of the panic-mode FSM: 4 states, transitions, 2-qubit codes |
+| `docs/panic_mode_states.png` | PNG render of the panic-mode state diagram |
+| `docs/panic_mode_cycle.svg` | Overload-recovery cycle, 2-qubit encoding table, grounding cues |
+| `docs/panic_mode_cycle.png` | PNG render of the overload-recovery cycle |
 | `verilog/gf_topological_dag.v` | Synthesizable digital Verilog RTL + self-checking testbench (GF(2⁴) DAG) |
 | `verilog-a/gf_topological_dag.va` | Verilog-A continuous-time behavioral model of the same DAG |
 | `verilog-a/cognitive_poly_cell.va` | Verilog-A cubic polynomial cell (double-well memory / gradient flow) |
@@ -4454,6 +4458,10 @@ The states are NORMAL, OVERLOAD, RECOVERY, and ESCALATE (terminal). The transiti
 | ESCALATE | any | ESCALATE (terminal) |
 
 During RECOVERY, tokens that are not SYNC or TIMEOUT are enqueued in a deferred buffer rather than dropped. When SYNC fires and the machine returns to NORMAL, the buffer is drained automatically, so overloaded content is re-processed at a calmer time. This prevents permanent information loss while the parser is in error-recovery mode.
+
+![Panic-mode state diagram](docs/panic_mode_states.svg)
+
+![Overload-recovery cycle and 2-qubit encoding](docs/panic_mode_cycle.svg)
 
 The grounding cues map to events: 5 breaths or a room change is SYNC (RECOVERY → NORMAL); calling a friend is ESCALATE_REQ (OVERLOAD → ESCALATE); a 60-second timeout in RECOVERY is TIMEOUT (RECOVERY → ESCALATE); an unexpected stressor is NO_ACTION (NORMAL → OVERLOAD → RECOVERY).
 
