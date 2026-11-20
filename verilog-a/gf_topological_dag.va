@@ -1,0 +1,208 @@
+// =============================================================================
+// gf_topological_dag.va
+// Verilog-A Behavioral Model: Finite-Field GF(2) / GF(2^4) Arithmetic over a
+// Sparse Ramanujan-Expander Topological DAG with Holographic Boundary Entropy
+// =============================================================================
+// Mathematical Architecture:
+//   1. Finite Field GF(2^4) with irreducible polynomial P(x) = x^4 + x + 1 (0x13)
+//      and base-field GF(2) parity constraints.
+//      Analog voltages are normalized to logic-0 = 0.0 V, logic-1 = Vdd (1.0 V),
+//      using smooth tanh thresholding for continuous-time differentiability.
+//   2. Topological DAG (3 layers, N = 8 nodes per layer, 4-bit GF(2^4) buses):
+//      Layer 0 (Bulk) -> Layer 1 (Interior) -> Layer 2 (Boundary).
+//      Inter-layer connectivity follows the 3-regular Ramanujan circulant
+//      C_8(1, 4) (Wagner / Mobius ladder graph), whose nontrivial eigenvalues
+//      satisfy |lambda| <= 1 + sqrt(2) < 2*sqrt(2), giving optimal expansion.
+//   3. Holographic Error-Correction & Boundary Entropy:
+//      - Parity-check syndrome voltage V(syndrome_err) measures GF(2) / GF(2^4)
+//        consistency between bulk parity and reconstructed boundary parity.
+//      - Boundary cut-entropy V(boundary_entropy) models the Bekenstein-Hawking /
+//        Ryu-Takayanagi area-law bound (active bit-transitions across the cut).
+// =============================================================================
+
+`include "disciplines.vams"
+`include "constants.vams"
+
+module gf2_xor_analog(a, b, y);
+    input a, b;
+    output y;
+    electrical a, b, y;
+
+    parameter real vdd   = 1.0;
+    parameter real gain  = 20.0;
+    parameter real vth   = 0.5;
+
+    real va, vb, pa, pb, pxor;
+
+    analog begin
+        // Smoothly map analog voltages to [0, 1] soft-bits
+        va = 0.5 * (1.0 + tanh(gain * (V(a) - vth)));
+        vb = 0.5 * (1.0 + tanh(gain * (V(b) - vth)));
+        // Continuous GF(2) addition: a + b - 2*a*b
+        pxor = va + vb - 2.0 * va * vb;
+        V(y) <+ vdd * pxor;
+    end
+endmodule
+
+module gf16_mac_node(in0, in1, in2, coeff, out);
+    // Single topological DAG neuron/node: computes
+    //   out = (in0 ^ in1 ^ in2) * coeff   in GF(2^4) mod (x^4 + x + 1)
+    input  [3:0] in0, in1, in2, coeff;
+    output [3:0] out;
+    electrical [3:0] in0, in1, in2, coeff, out;
+
+    parameter real vdd  = 1.0;
+    parameter real gain = 20.0;
+    parameter real vth  = 0.5;
+    parameter real tau  = 1.0e-9; // Node relaxation time constant (1 ns)
+
+    real a0[3:0], a1[3:0], a2[3:0], c[3:0];
+    real s[3:0];
+    real p[6:0];
+    real r[3:0];
+    integer i, j;
+
+    analog begin
+        // 1. Soft-threshold inputs to [0, 1]
+        for (i = 0; i < 4; i = i + 1) begin
+            a0[i] = 0.5 * (1.0 + tanh(gain * (V(in0[i])   - vth)));
+            a1[i] = 0.5 * (1.0 + tanh(gain * (V(in1[i])   - vth)));
+            a2[i] = 0.5 * (1.0 + tanh(gain * (V(in2[i])   - vth)));
+            c[i]  = 0.5 * (1.0 + tanh(gain * (V(coeff[i]) - vth)));
+            // GF(2) 3-input XOR: s = a0 ^ a1 ^ a2
+            s[i] = a0[i] + a1[i] - 2.0 * a0[i] * a1[i];
+            s[i] = s[i]  + a2[i] - 2.0 * s[i]  * a2[i];
+        end
+
+        // 2. Polynomial multiplication in GF(2)[x]: p(x) = s(x) * c(x)
+        for (i = 0; i < 7; i = i + 1) begin
+            p[i] = 0.0;
+        end
+        for (i = 0; i < 4; i = i + 1) begin
+            for (j = 0; j < 4; j = j + 1) begin
+                // Accumulate XOR of partial products (s[i] & c[j])
+                p[i+j] = p[i+j] + (s[i] * c[j]) - 2.0 * p[i+j] * (s[i] * c[j]);
+            end
+        end
+
+        // 3. Modular reduction by P(x) = x^4 + x + 1:
+        //    x^4 -> x + 1, x^5 -> x^2 + x, x^6 -> x^3 + x^2
+        r[0] = p[0] + p[4] - 2.0 * p[0] * p[4];
+        r[1] = p[1] + p[4] - 2.0 * p[1] * p[4];
+        r[1] = r[1] + p[5] - 2.0 * r[1] * p[5];
+        r[2] = p[2] + p[5] - 2.0 * p[2] * p[5];
+        r[2] = r[2] + p[6] - 2.0 * r[2] * p[6];
+        r[3] = p[3] + p[6] - 2.0 * p[3] * p[6];
+
+        // 4. First-order RC relaxation to model causal DAG propagation
+        for (i = 0; i < 4; i = i + 1) begin
+            V(out[i]) <+ laplace_nd(vdd * r[i], {1.0}, {1.0, tau});
+        end
+    end
+endmodule
+
+module gf_topological_dag_va(
+    bulk_0, bulk_1, bulk_2, bulk_3, bulk_4, bulk_5, bulk_6, bulk_7,
+    bnd_0,  bnd_1,  bnd_2,  bnd_3,  bnd_4,  bnd_5,  bnd_6,  bnd_7,
+    coeff_l1, coeff_l2,
+    syndrome_err, boundary_entropy
+);
+    // 8 bulk input nodes (4-bit GF(2^4) each)
+    input  [3:0] bulk_0, bulk_1, bulk_2, bulk_3, bulk_4, bulk_5, bulk_6, bulk_7;
+    // 8 boundary output nodes (4-bit GF(2^4) each)
+    output [3:0] bnd_0,  bnd_1,  bnd_2,  bnd_3,  bnd_4,  bnd_5,  bnd_6,  bnd_7;
+    // Layer GF(2^4) mixing coefficients
+    input  [3:0] coeff_l1, coeff_l2;
+    // Holographic syndrome error & boundary cut-entropy proxy
+    output syndrome_err, boundary_entropy;
+
+    electrical [3:0] bulk_0, bulk_1, bulk_2, bulk_3, bulk_4, bulk_5, bulk_6, bulk_7;
+    electrical [3:0] bnd_0,  bnd_1,  bnd_2,  bnd_3,  bnd_4,  bnd_5,  bnd_6,  bnd_7;
+    electrical [3:0] coeff_l1, coeff_l2;
+    electrical syndrome_err, boundary_entropy;
+
+    // Interior layer (Layer 1) nodes
+    electrical [3:0] mid_0, mid_1, mid_2, mid_3, mid_4, mid_5, mid_6, mid_7;
+
+    parameter real vdd  = 1.0;
+    parameter real gain = 20.0;
+    parameter real vth  = 0.5;
+
+    // -------------------------------------------------------------------------
+    // Layer 0 (Bulk) -> Layer 1 (Interior): Sparse d=3 Ramanujan C_8(1, 4)
+    // Node i connects to {(i-1)%8, (i+1)%8, (i+4)%8}
+    // -------------------------------------------------------------------------
+    gf16_mac_node l1_n0(bulk_7, bulk_1, bulk_4, coeff_l1, mid_0);
+    gf16_mac_node l1_n1(bulk_0, bulk_2, bulk_5, coeff_l1, mid_1);
+    gf16_mac_node l1_n2(bulk_1, bulk_3, bulk_6, coeff_l1, mid_2);
+    gf16_mac_node l1_n3(bulk_2, bulk_4, bulk_7, coeff_l1, mid_3);
+    gf16_mac_node l1_n4(bulk_3, bulk_5, bulk_0, coeff_l1, mid_4);
+    gf16_mac_node l1_n5(bulk_4, bulk_6, bulk_1, coeff_l1, mid_5);
+    gf16_mac_node l1_n6(bulk_5, bulk_7, bulk_2, coeff_l1, mid_6);
+    gf16_mac_node l1_n7(bulk_6, bulk_0, bulk_3, coeff_l1, mid_7);
+
+    // -------------------------------------------------------------------------
+    // Layer 1 (Interior) -> Layer 2 (Boundary): Sparse d=3 Ramanujan C_8(1, 4)
+    // -------------------------------------------------------------------------
+    gf16_mac_node l2_n0(mid_7, mid_1, mid_4, coeff_l2, bnd_0);
+    gf16_mac_node l2_n1(mid_0, mid_2, mid_5, coeff_l2, bnd_1);
+    gf16_mac_node l2_n2(mid_1, mid_3, mid_6, coeff_l2, bnd_2);
+    gf16_mac_node l2_n3(mid_2, mid_4, mid_7, coeff_l2, bnd_3);
+    gf16_mac_node l2_n4(mid_3, mid_5, mid_0, coeff_l2, bnd_4);
+    gf16_mac_node l2_n5(mid_4, mid_6, mid_1, coeff_l2, bnd_5);
+    gf16_mac_node l2_n6(mid_5, mid_7, mid_2, coeff_l2, bnd_6);
+    gf16_mac_node l2_n7(mid_6, mid_0, mid_3, coeff_l2, bnd_7);
+
+    // -------------------------------------------------------------------------
+    // Holographic Parity Syndrome & Boundary Cut-Entropy Readout
+    // Since each layer applies a d=3 linear map over GF(2^4), the global
+    // parity sum across all 8 boundary nodes equals (3^2 mod 2) * c1 * c2 * sum(bulk).
+    // Comparing boundary parity against expected bulk parity yields syndrome_err.
+    // -------------------------------------------------------------------------
+    real b_par, o_par, ent_acc;
+    integer k;
+
+    analog begin
+        b_par   = 0.0;
+        o_par   = 0.0;
+        ent_acc = 0.0;
+
+        // Compute bit-0 global parity of bulk and boundary, plus boundary Hamming weight
+        // (area-law information boundary proxy)
+        for (k = 0; k < 4; k = k + 1) begin
+            ent_acc = ent_acc
+                + 0.5 * (1.0 + tanh(gain * (V(bnd_0[k]) - vth)))
+                + 0.5 * (1.0 + tanh(gain * (V(bnd_1[k]) - vth)))
+                + 0.5 * (1.0 + tanh(gain * (V(bnd_2[k]) - vth)))
+                + 0.5 * (1.0 + tanh(gain * (V(bnd_3[k]) - vth)))
+                + 0.5 * (1.0 + tanh(gain * (V(bnd_4[k]) - vth)))
+                + 0.5 * (1.0 + tanh(gain * (V(bnd_5[k]) - vth)))
+                + 0.5 * (1.0 + tanh(gain * (V(bnd_6[k]) - vth)))
+                + 0.5 * (1.0 + tanh(gain * (V(bnd_7[k]) - vth)));
+        end
+
+        // Global GF(2) parity on LSB across bulk vs. boundary (for unit coefficients)
+        b_par = 0.5 * (1.0 + tanh(gain * (V(bulk_0[0]) - vth)));
+        b_par = b_par + 0.5*(1.0+tanh(gain*(V(bulk_1[0])-vth))) - 2.0*b_par*0.5*(1.0+tanh(gain*(V(bulk_1[0])-vth)));
+        b_par = b_par + 0.5*(1.0+tanh(gain*(V(bulk_2[0])-vth))) - 2.0*b_par*0.5*(1.0+tanh(gain*(V(bulk_2[0])-vth)));
+        b_par = b_par + 0.5*(1.0+tanh(gain*(V(bulk_3[0])-vth))) - 2.0*b_par*0.5*(1.0+tanh(gain*(V(bulk_3[0])-vth)));
+        b_par = b_par + 0.5*(1.0+tanh(gain*(V(bulk_4[0])-vth))) - 2.0*b_par*0.5*(1.0+tanh(gain*(V(bulk_4[0])-vth)));
+        b_par = b_par + 0.5*(1.0+tanh(gain*(V(bulk_5[0])-vth))) - 2.0*b_par*0.5*(1.0+tanh(gain*(V(bulk_5[0])-vth)));
+        b_par = b_par + 0.5*(1.0+tanh(gain*(V(bulk_6[0])-vth))) - 2.0*b_par*0.5*(1.0+tanh(gain*(V(bulk_6[0])-vth)));
+        b_par = b_par + 0.5*(1.0+tanh(gain*(V(bulk_7[0])-vth))) - 2.0*b_par*0.5*(1.0+tanh(gain*(V(bulk_7[0])-vth)));
+
+        o_par = 0.5 * (1.0 + tanh(gain * (V(bnd_0[0]) - vth)));
+        o_par = o_par + 0.5*(1.0+tanh(gain*(V(bnd_1[0])-vth))) - 2.0*o_par*0.5*(1.0+tanh(gain*(V(bnd_1[0])-vth)));
+        o_par = o_par + 0.5*(1.0+tanh(gain*(V(bnd_2[0])-vth))) - 2.0*o_par*0.5*(1.0+tanh(gain*(V(bnd_2[0])-vth)));
+        o_par = o_par + 0.5*(1.0+tanh(gain*(V(bnd_3[0])-vth))) - 2.0*o_par*0.5*(1.0+tanh(gain*(V(bnd_3[0])-vth)));
+        o_par = o_par + 0.5*(1.0+tanh(gain*(V(bnd_4[0])-vth))) - 2.0*o_par*0.5*(1.0+tanh(gain*(V(bnd_4[0])-vth)));
+        o_par = o_par + 0.5*(1.0+tanh(gain*(V(bnd_5[0])-vth))) - 2.0*o_par*0.5*(1.0+tanh(gain*(V(bnd_5[0])-vth)));
+        o_par = o_par + 0.5*(1.0+tanh(gain*(V(bnd_6[0])-vth))) - 2.0*o_par*0.5*(1.0+tanh(gain*(V(bnd_6[0])-vth)));
+        o_par = o_par + 0.5*(1.0+tanh(gain*(V(bnd_7[0])-vth))) - 2.0*o_par*0.5*(1.0+tanh(gain*(V(bnd_7[0])-vth)));
+
+        // Syndrome voltage: 0 V when parity invariant holds, ~Vdd on fault/erasure
+        V(syndrome_err)     <+ vdd * (b_par + o_par - 2.0 * b_par * o_par);
+        // Normalized boundary entropy voltage in [0, Vdd] (active bits / 32)
+        V(boundary_entropy) <+ vdd * (ent_acc / 32.0);
+    end
+endmodule
