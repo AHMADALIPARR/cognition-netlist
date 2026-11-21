@@ -32,7 +32,9 @@ This is a **simulation artifact**, not a biological consciousness model. Every c
 | `qsharp/AnalogWaveInterference.qs` | Quantum end: Q# wave interference bridge, analog voltages to qubits (phase / amplitude encoding, F₂ parity) |
 | `qsharp/AnalogWaveInterference.csproj` | .NET 8.0 project for the Q# bridge (Microsoft.Quantum.Sdk 0.28.302812) |
 | `docs/neuron_states.svg` | Scatter plot of the 1,024 clean neuron states, generated from `clean_state.csv` |
+| `docs/neuron_states.png` | PNG render of the clean attractor scatter plot |
 | `docs/robustness.svg` | Bar chart of final energy by scenario, generated from `results.csv` |
+| `docs/robustness.png` | PNG render of the final-energy bar chart |
 | `docs/panic_mode_states.svg` | State diagram of the panic-mode FSM: 4 states, transitions, 2-qubit codes |
 | `docs/panic_mode_states.png` | PNG render of the panic-mode state diagram |
 | `docs/panic_mode_cycle.svg` | Overload-recovery cycle, 2-qubit encoding table, grounding cues |
@@ -4294,13 +4296,13 @@ The full scenario table, as recorded in `results.csv`:
 
 Node loss raises the final energy (the attractor is shallower with fewer neurons), but the surviving graph stays in a single connected component at every loss level, and the RMS distance from the clean survivor coordinates stays below 0.00027. The gradient RMS stays at the 1e-8 to 1e-7 level, which is the relaxed fixed point.
 
-![Final energy by scenario](docs/robustness.svg)
+![Final energy by scenario](docs/robustness.png)
 
 ### Clean attractor state (`clean_state.csv`)
 
 `clean_state.csv` holds the final clean state: 1,024 neuron (x, y) pairs. The states cluster tightly: 1,015 of the 1,024 neurons have x ≥ 0.999, and 1,023 of the 1,024 have y < -0.0029. One neuron (neuron 0, the initial cue) sits apart at x = 0.891758539329, y = -0.00251311502948. The gradient flow relaxes essentially all neurons to the same point near (1, -0.003): a single attractor.
 
-![Clean attractor state, 1024 neurons](docs/neuron_states.svg)
+![Clean attractor state, 1024 neurons](docs/neuron_states.png)
 
 ---
 
@@ -4459,9 +4461,9 @@ The states are NORMAL, OVERLOAD, RECOVERY, and ESCALATE (terminal). The transiti
 
 During RECOVERY, tokens that are not SYNC or TIMEOUT are enqueued in a deferred buffer rather than dropped. When SYNC fires and the machine returns to NORMAL, the buffer is drained automatically, so overloaded content is re-processed at a calmer time. This prevents permanent information loss while the parser is in error-recovery mode.
 
-![Panic-mode state diagram](docs/panic_mode_states.svg)
+![Panic-mode state diagram](docs/panic_mode_states.png)
 
-![Overload-recovery cycle and 2-qubit encoding](docs/panic_mode_cycle.svg)
+![Overload-recovery cycle and 2-qubit encoding](docs/panic_mode_cycle.png)
 
 The grounding cues map to events: 5 breaths or a room change is SYNC (RECOVERY → NORMAL); calling a friend is ESCALATE_REQ (OVERLOAD → ESCALATE); a 60-second timeout in RECOVERY is TIMEOUT (RECOVERY → ESCALATE); an unexpected stressor is NO_ACTION (NORMAL → OVERLOAD → RECOVERY).
 
