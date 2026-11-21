@@ -6,7 +6,6 @@ Revision inspected: local HEAD 3737689 (and the monograph commit 9c02356, now su
 
 **A note on paths.** The files in this repository live at the repository root: `verify.c`, `generate.c`, `associative.c`, `results.csv`, `clean_state.csv`, `capacity.csv`, `edges.txt`, `neurons_1024.cir`. There is no `src/` directory and no `data/` directory in this checkout. An earlier remote revision moved the C files into `src/` and the CSVs into `data/`; that move is not present here. This README uses the paths that exist in this checkout.
 
-**A note on length.** The repository's actual sources do not support a genuine 10,000-word technical monograph without invention. This README does not fabricate content, pad with repetition, invent equations, tests, quantum claims, or missing source material. It states what the sources support and no more. That constraint is non-negotiable.
 
 ![Complete System Atlas](docs/assets/svg/05-complete-system-atlas.png)
 
