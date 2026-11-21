@@ -71,7 +71,7 @@ int main(void){
   static const int pvals[]={1,2,4,8,16,32,64};
   static const int noise[]={5,10,20,30,40};
   static const int loss[]={0,10,20};
-  FILE *f=fopen("capacity.csv","w");if(!f){perror("capacity.csv");return 2;}
+  FILE *f=fopen("data/capacity.csv","w");if(!f){perror("data/capacity.csv");return 2;}
   fputs("patterns,flip_percent,neuron_loss_percent,trials,perfect_recall_rate,mean_bit_accuracy,mean_sweeps,mean_energy,baseline_cue_accuracy\n",f);
   int8_t *mem=malloc(64*N),*state=malloc(N);
   int32_t *ov=malloc(64*sizeof *ov);

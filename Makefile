@@ -3,15 +3,17 @@ CFLAGS ?= -std=c11 -O3 -Wall -Wextra -pedantic
 LDLIBS ?= -lm
 .PHONY: all check clean
 all: generate verify
-verify: verify.c
-	$(CC) $(CFLAGS) $< -o $@ $(LDLIBS)
-generate: generate.c
-	$(CC) $(CFLAGS) $< -o $@
+bin:
+	mkdir -p bin
+verify: src/verify.c | bin
+	$(CC) $(CFLAGS) $< -o bin/verify $(LDLIBS)
+generate: src/generate.c | bin
+	$(CC) $(CFLAGS) $< -o bin/generate
 check: verify
-	./verify edges.txt
+	./bin/verify data/edges.txt
 clean:
-	rm -f verify generate clean_state.csv results.csv
+	rm -rf bin data/clean_state.csv data/results.csv
 
-capacity: associative.c
-	$(CC) $(CFLAGS) associative.c -lm -o associative
-	./associative
+capacity: src/associative.c | bin
+	$(CC) $(CFLAGS) src/associative.c -lm -o bin/associative
+	./bin/associative

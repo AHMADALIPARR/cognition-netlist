@@ -4,7 +4,7 @@
 Repository: https://github.com/AHMADALIPARR/cognition-netlist-1024
 Revision inspected: local HEAD 3737689 (and the monograph commit 9c02356, now superseded by this grounded version)
 
-**A note on paths.** The files in this repository live at the repository root: `verify.c`, `generate.c`, `associative.c`, `results.csv`, `clean_state.csv`, `capacity.csv`, `edges.txt`, `neurons_1024.cir`. There is no `src/` directory and no `data/` directory in this checkout. An earlier remote revision moved the C files into `src/` and the CSVs into `data/`; that move is not present here. This README uses the paths that exist in this checkout.
+**A note on paths.** The files in this repository live in directories by kind: C sources in `src/` (`src/verify.c`, `src/generate.c`, `src/associative.c`), data in `data/` (`data/results.csv`, `data/clean_state.csv`, `data/capacity.csv`, `data/edges.txt`, `data/retrieval_true.unl`, `data/retrieval_false.unl`), the SPICE netlist in `spice/` (`spice/neurons_1024.cir`). Binaries build into `bin/`. This README uses the paths that exist in this checkout.
 
 
 ![Complete System Atlas](docs/assets/svg/05-complete-system-atlas.png)
@@ -13,28 +13,28 @@ Revision inspected: local HEAD 3737689 (and the monograph commit 9c02356, now su
 
 ## 1. Project Identity and Technical Thesis
 
-This repository records an engineering realization of a 1,024-node complex-valued continuous-time dynamical system. Each node is realized as a pair of circuit nodes (real and imaginary) carrying a capacitor and a cubic polynomial behavioral current source. The nodes are coupled by an 8-regular resistor network containing 4,096 undirected edges. The dynamics are a gradient flow of a quartic energy. A deterministic C11 reference integrator (`verify.c`) reproduces the same flow and supplies the verified experimental record stored in `results.csv` and `clean_state.csv`. Supporting single-cell models exist in Julia and R; additional language ports implement a separate four-state "panic-mode" finite-state machine and topological DAG fragments.
+This repository records an engineering realization of a 1,024-node complex-valued continuous-time dynamical system. Each node is realized as a pair of circuit nodes (real and imaginary) carrying a capacitor and a cubic polynomial behavioral current source. The nodes are coupled by an 8-regular resistor network containing 4,096 undirected edges. The dynamics are a gradient flow of a quartic energy. A deterministic C11 reference integrator (`src/verify.c`) reproduces the same flow and supplies the verified experimental record stored in `data/results.csv` and `data/clean_state.csv`. Supporting single-cell models exist in Julia and R; additional language ports implement a separate four-state "panic-mode" finite-state machine and topological DAG fragments.
 
 The work treats continuous-time dynamical systems, sparse graph coupling, Lyapunov decrease, structural robustness under vertex deletion, and multi-language numerical consistency as concrete engineering problems. No claim is made that the system implements biological neurons, consciousness, or quantum effects beyond the classical numerical models present in the sources.
 
 Primary source authority:
 
-- `verify.c` (lines 1-187) — reference integrator and robustness suite
-- `generate.c` (lines 1-55) — netlist emitter
-- `neurons_1024.cir` (12,301 lines) — generated SPICE netlist
-- `edges.txt` (4,096 lines) — 8-regular edge list
+- `src/verify.c` (lines 1-187) — reference integrator and robustness suite
+- `src/generate.c` (lines 1-55) — netlist emitter
+- `spice/neurons_1024.cir` (12,301 lines) — generated SPICE netlist
+- `data/edges.txt` (4,096 lines) — 8-regular edge list
 - `cognitive_poly_julia_r/cognitive_poly.jl` and `.R` — single-cell polynomial model
-- `results.csv` — recorded experimental outcomes
+- `data/results.csv` — recorded experimental outcomes
 
 ## 2. Research Objectives and Computational Scope
 
 From the sources, the concrete objectives realized in code are:
 
-1. Construct an 8-regular undirected graph on N = 1,024 vertices (`edges.txt`, verified in `verify.c:read_edges` and `parity_check`).
-2. Realize each vertex as a complex-valued state (x, y) whose continuous-time dynamics are the gradient flow of the energy E = sum_i 1/2 alpha r_i^2 + 1/4 beta r_i^4 + (gc/2) sum_edges (delta_x^2 + delta_y^2), with alpha = -0.2, beta = 0.2, gc = 0.04 (`verify.c` constants and derivative function).
-3. Provide a deterministic RK4 integrator that preserves the Lyapunov decrease of E under the clean dynamics and under controlled vertex deletion (`verify.c:simulate`).
-4. Emit a corresponding analog netlist in which each neuron is two capacitors plus two behavioral current sources implementing the cubic polynomial (`generate.c` and `neurons_1024.cir` header parameters).
-5. Benchmark a separate binary Hopfield associative-memory capacity experiment (`associative.c`) that is explicitly documented as "Not claimed equivalent to the continuous analog SPICE model."
+1. Construct an 8-regular undirected graph on N = 1,024 vertices (`data/edges.txt`, verified in `src/verify.c:read_edges` and `parity_check`).
+2. Realize each vertex as a complex-valued state (x, y) whose continuous-time dynamics are the gradient flow of the energy E = sum_i 1/2 alpha r_i^2 + 1/4 beta r_i^4 + (gc/2) sum_edges (delta_x^2 + delta_y^2), with alpha = -0.2, beta = 0.2, gc = 0.04 (`src/verify.c` constants and derivative function).
+3. Provide a deterministic RK4 integrator that preserves the Lyapunov decrease of E under the clean dynamics and under controlled vertex deletion (`src/verify.c:simulate`).
+4. Emit a corresponding analog netlist in which each neuron is two capacitors plus two behavioral current sources implementing the cubic polynomial (`src/generate.c` and `spice/neurons_1024.cir` header parameters).
+5. Benchmark a separate binary Hopfield associative-memory capacity experiment (`src/associative.c`) that is explicitly documented as "Not claimed equivalent to the continuous analog SPICE model."
 6. Supply single-neuron polynomial and potential functions in Julia and R that match the local term of the vector field (`cognitive_poly_julia_r/`).
 7. Provide independent four-state finite-state machines in Smalltalk, Quipper, and a Q# sketch, together with a Liquid-Haskell annotated ODE note; these are architecturally separate from the 1,024-node continuous system.
 
@@ -46,14 +46,14 @@ Scope deliberately excludes: biological fidelity claims, quantum-mechanical dyna
 
 | Path | Language / Format | Role | Key constants / structures |
 |------|-------------------|------|----------------------------|
-| `verify.c` | C11 | Reference RK4 integrator, topology validation, robustness scenarios | N=1024, DEG=8, E=4096, ALPHA=-0.2, BETA=0.2, GC=0.04, STEPS=2400, DT=0.05 |
-| `generate.c` | C11 | SPICE netlist emitter from edge list | Same N, DEG; emits Cx, Cy, Bx, By per neuron |
-| `associative.c` | C11 | Binary Hopfield capacity trial | N=1024, TRIALS=16, SWEEPS=24; separate from continuous model |
-| `edges.txt` | plain text | 8-regular edge list | 4096 lines of "a b" pairs |
-| `neurons_1024.cir` | SPICE netlist | Generated analog circuit | .param cap=1 alpha=-0.2 beta=0.2 gc=0.04; 1024x(2C + 2B) + resistive couplers |
-| `clean_state.csv` | CSV | Final clean equilibrium coordinates | neuron,x,y (1025 lines incl. header) |
-| `results.csv` | CSV | Structural invariant suite outcomes | 5 scenarios, all PASS |
-| `capacity.csv` | CSV | Hopfield capacity results | produced by associative |
+| `src/verify.c` | C11 | Reference RK4 integrator, topology validation, robustness scenarios | N=1024, DEG=8, E=4096, ALPHA=-0.2, BETA=0.2, GC=0.04, STEPS=2400, DT=0.05 |
+| `src/generate.c` | C11 | SPICE netlist emitter from edge list | Same N, DEG; emits Cx, Cy, Bx, By per neuron |
+| `src/associative.c` | C11 | Binary Hopfield capacity trial | N=1024, TRIALS=16, SWEEPS=24; separate from continuous model |
+| `data/edges.txt` | plain text | 8-regular edge list | 4096 lines of "a b" pairs |
+| `spice/neurons_1024.cir` | SPICE netlist | Generated analog circuit | .param cap=1 alpha=-0.2 beta=0.2 gc=0.04; 1024x(2C + 2B) + resistive couplers |
+| `data/clean_state.csv` | CSV | Final clean equilibrium coordinates | neuron,x,y (1025 lines incl. header) |
+| `data/results.csv` | CSV | Structural invariant suite outcomes | 5 scenarios, all PASS |
+| `data/capacity.csv` | CSV | Hopfield capacity results | produced by associative |
 | `cognitive_poly_julia_r/cognitive_poly.jl` | Julia | Single-cell RHS, potential, RK4, ridge surrogate | cap=1e-9, a=-1e-6, b=1e-6, gain=1e-6 (scaled local model) |
 | `cognitive_poly_julia_r/cognitive_poly.R` | R | Identical single-cell model | same parameters |
 | `qsharp/AnalogWaveInterference.qs` | Q# | Separate interference / state-machine sketch | not coupled to the 1024-node continuous system |
@@ -69,21 +69,21 @@ Scope deliberately excludes: biological fidelity claims, quantum-mechanical dyna
 
 ### Component responsibilities (source-derived)
 
-- **Topology layer** (`edges.txt` + `read_edges` + `parity_check`): guarantees an 8-regular simple undirected graph and a trivial GF(2) incidence parity.
-- **Continuous dynamics layer** (`derivative`, `energy`, `rk4` inside `verify.c`): implements the complex cubic vector field plus resistive coupling and a weak reference pull on neuron 0.
-- **Netlist layer** (`generate.c` → `neurons_1024.cir`): mechanical translation of the same local polynomial and coupling into SPICE behavioral sources.
+- **Topology layer** (`data/edges.txt` + `read_edges` + `parity_check`): guarantees an 8-regular simple undirected graph and a trivial GF(2) incidence parity.
+- **Continuous dynamics layer** (`derivative`, `energy`, `rk4` inside `src/verify.c`): implements the complex cubic vector field plus resistive coupling and a weak reference pull on neuron 0.
+- **Netlist layer** (`src/generate.c` → `spice/neurons_1024.cir`): mechanical translation of the same local polynomial and coupling into SPICE behavioral sources.
 - **Single-cell verification layer** (Julia / R): recovers the local one-dimensional polynomial, its potential, critical value s_crit = 2/(3 sqrt 3), and a ridge regression surrogate; parameters are scaled relative to the C reference.
-- **Associative layer** (`associative.c`): independent binary Hopfield experiment.
+- **Associative layer** (`src/associative.c`): independent binary Hopfield experiment.
 - **FSM layer** (Smalltalk / Quipper / Q# / `transitions.md`): independent four-state panic-mode machine with deferred token buffer; not wired into the continuous 1,024-node system.
 - **Build layer** (`Makefile`): compiles the three C programs and runs the structural suite via `make check`.
 
 ### Data flow (verified)
 
-`edges.txt` → `generate.c` → `neurons_1024.cir` → (external SPICE, not executed in-repo)
+`data/edges.txt` → `src/generate.c` → `spice/neurons_1024.cir` → (external SPICE, not executed in-repo)
 
-`edges.txt` → `verify.c` → `results.csv` + `clean_state.csv`
+`data/edges.txt` → `src/verify.c` → `data/results.csv` + `data/clean_state.csv`
 
-`associative.c` → `capacity.csv`
+`src/associative.c` → `data/capacity.csv`
 
 Julia / R scripts are self-contained and print PASS on completion; they do not read or write the C data files.
 
@@ -97,7 +97,7 @@ All equations below are taken directly from the implementation.
 
 ### Local vector field (C reference)
 
-From `verify.c:derivative` (and the matching energy function):
+From `src/verify.c:derivative` (and the matching energy function):
 
 For each alive neuron i with state (x, y) and r^2 = x^2 + y^2:
 
@@ -131,7 +131,7 @@ with GREF = 0.1, REF = 0.2.
 
 ### Integrator
 
-Classical RK4 with fixed step DT = 0.05 for STEPS = 2,400 (`verify.c`).
+Classical RK4 with fixed step DT = 0.05 for STEPS = 2,400 (`src/verify.c`).
 
 ### Single-cell Julia / R model
 
@@ -158,7 +158,7 @@ Standard zero-diagonal Hebbian form; energy decrease is monitored but the model 
 
 The name "cognitive polynomial" in the repository refers to the cubic local non-linearity that produces a bistable (or multi-stable) landscape. In the C reference the landscape is rotationally symmetric in the complex plane for each neuron; the fixed points of an isolated neuron lie on the circle of radius sqrt(-alpha/beta) = 1 when alpha = -beta.
 
-The global dynamics are a gradient flow of the total energy defined above. Consequently the energy is monotonically non-increasing under the clean vector field (verified numerically in the "clean" and "loss_*" scenarios of `results.csv`). The "noisy" scenario injects a temporary forcing and records a negligible energy increase after the forcing is removed, consistent with return to the same Lyapunov function.
+The global dynamics are a gradient flow of the total energy defined above. Consequently the energy is monotonically non-increasing under the clean vector field (verified numerically in the "clean" and "loss_*" scenarios of `data/results.csv`). The "noisy" scenario injects a temporary forcing and records a negligible energy increase after the forcing is removed, consistent with return to the same Lyapunov function.
 
 No further "cognitive" interpretation (memory, attention, consciousness) is present in the executable sources; the only associative experiment is the separate binary Hopfield code.
 
@@ -166,7 +166,7 @@ No further "cognitive" interpretation (memory, attention, consciousness) is pres
 
 ## 6. Electrical Circuit Representation and KCL Relationships
 
-The generated netlist `neurons_1024.cir` (12,301 lines) is produced by `generate.c`. Header parameters are:
+The generated netlist `spice/neurons_1024.cir` (12,301 lines) is produced by `src/generate.c`. Header parameters are:
 
 .param cap=1 alpha=-0.2 beta=0.2 gc=0.04
 
@@ -189,19 +189,19 @@ Each edge contributes two resistors, one per channel: Rx{e} x{i} x{j} {1/gc} and
 
 A weak reference is applied only to neuron 0 in the C model (GREF, REF). The netlist generation code emits initial conditions and a transient analysis card. The C integrator is the authoritative dynamics.
 
-No full SPICE deck execution or measured waveforms are stored in the repository; the numerical evidence is the C integrator record in `results.csv`. The author ran the SPICE transient in ngspice and verified the netlist by actual computation; that testing claim comes from the author.
+No full SPICE deck execution or measured waveforms are stored in the repository; the numerical evidence is the C integrator record in `data/results.csv`. The author ran the SPICE transient in ngspice and verified the netlist by actual computation; that testing claim comes from the author.
 
 ## 7. Neuron, Edge, Topology and Connectivity Representation
 
-- **N** = 1,024 vertices, each carrying a complex state (x, y) stored as interleaved doubles `z[2*i]`, `z[2*i+1]` (`verify.c`).
+- **N** = 1,024 vertices, each carrying a complex state (x, y) stored as interleaved doubles `z[2*i]`, `z[2*i+1]` (`src/verify.c`).
 - **Degree** = 8, **E** = N*DEG/2 = 4,096 undirected edges.
 - Edge list stored as two parallel arrays `ea[k]`, `eb[k]` after validation that the graph is simple, undirected, loop-free and exactly 8-regular (`read_edges` + degree check).
-- A static adjacency matrix `adj[N][N]` prevents duplicate edges during load in `generate.c`.
-- GF(2) incidence parity check is trivial (each edge contributes two 1s) and is performed once at start-up. Note: the `parity_check` function in `verify.c` as written is vacuous — `(1u^1u)!=0u` is always false, so it never verifies a parity property; it only rejects self-loops already excluded by `read_edges`. The graph validation (range, self-loop, duplicate, count, degree) is real and is performed by `read_edges`.
+- A static adjacency matrix `adj[N][N]` prevents duplicate edges during load in `src/generate.c`.
+- GF(2) incidence parity check is trivial (each edge contributes two 1s) and is performed once at start-up. Note: the `parity_check` function in `src/verify.c` as written is vacuous — `(1u^1u)!=0u` is always false, so it never verifies a parity property; it only rejects self-loops already excluded by `read_edges`. The graph validation (range, self-loop, duplicate, count, degree) is real and is performed by `read_edges`.
 - Alive mask: `uint8_t alive[N]`; vertices can be deleted for robustness trials (5%, 10%, 20% random removal).
-- Connected-component count is computed after each deletion scenario and remains 1 in all recorded runs (`results.csv`).
+- Connected-component count is computed after each deletion scenario and remains 1 in all recorded runs (`data/results.csv`).
 
-The edge list file `edges.txt` contains exactly 4,096 lines of the form "a b". The C loader rejects any deviation from the expected cardinality or regularity. The graph was independently verified to be 8-regular: zero vertices have degree other than 8. The adjacency eigenvalues were computed from `edges.txt` for reference: the largest is 8.0, the second-largest is 5.25756776, and the maximum nontrivial eigenvalue magnitude is 5.26332069, against the Ramanujan bound 2 sqrt(7) = 5.29150262. This is an empirical spectral check, not an exact proof, and the graph is a seeded random regular graph, not a provably Ramanujan construction.
+The edge list file `data/edges.txt` contains exactly 4,096 lines of the form "a b". The C loader rejects any deviation from the expected cardinality or regularity. The graph was independently verified to be 8-regular: zero vertices have degree other than 8. The adjacency eigenvalues were computed from `data/edges.txt` for reference: the largest is 8.0, the second-largest is 5.25756776, and the maximum nontrivial eigenvalue magnitude is 5.26332069, against the Ramanujan bound 2 sqrt(7) = 5.29150262. This is an empirical spectral check, not an exact proof, and the graph is a seeded random regular graph, not a provably Ramanujan construction.
 
 ## 8. Julia Implementation and Numerical Methods
 
@@ -292,7 +292,7 @@ Q# file (`qsharp/AnalogWaveInterference.qs`) contains a separate interference / 
 
 Liquid-Haskell file (`quipper/QuipperODELiquid.hs`) contains reflective annotations and no-cloning comments around an ODE sketch; it is a research note, not an executable component of the 1,024-node system. It imports only Data.Set and does not import Quipper. Its ODE stepper is explicit forward Euler, although a comment calls it "Backward-Euler / semi-implicit." The code is authoritative. The author performed the Liquid Haskell verification, including the badClone rejection; that testing claim comes from the author.
 
-None of these language ports exchange data with `verify.c` or the SPICE netlist.
+None of these language ports exchange data with `src/verify.c` or the SPICE netlist.
 
 ---
 
@@ -308,9 +308,9 @@ The Verilog-A files are a cubic cell (`verilog-a/cognitive_poly_cell.va`, 28 lin
 
 ## 15. Data Provenance and Recorded Results
 
-`edges.txt` is the graph input: 4,096 lines, two integers per line, sorted lexicographically, 8-regular.
+`data/edges.txt` is the graph input: 4,096 lines, two integers per line, sorted lexicographically, 8-regular.
 
-`results.csv` has a header and 5 scenario rows, all PASS:
+`data/results.csv` has a header and 5 scenario rows, all PASS:
 
 | scenario | alive | components | final_energy | gradient_rms | max_amplitude | rms_to_clean |
 |---|---|---|---|---|---|---|
@@ -322,9 +322,9 @@ The Verilog-A files are a cubic cell (`verilog-a/cognitive_poly_cell.va`, 28 lin
 
 Energy scales as -0.05 per alive neuron. The noisy max amplitude exceeds 1 during forcing and relaxes back.
 
-`capacity.csv` has a header and 105 aggregated rows (7 pattern counts x 5 flip levels x 3 loss levels, 16 trials each, 1,680 runs). Perfect recall is 1.000000 for patterns at or below 32, except 32 patterns with 40% flip and 20% loss (0.937500). At 64 patterns the recall breaks down sharply at high corruption (worst 0.125000 at 64 patterns, 40% flip, 20% loss). Mean sweeps is 2.000 for nearly all low-load rows.
+`data/capacity.csv` has a header and 105 aggregated rows (7 pattern counts x 5 flip levels x 3 loss levels, 16 trials each, 1,680 runs). Perfect recall is 1.000000 for patterns at or below 32, except 32 patterns with 40% flip and 20% loss (0.937500). At 64 patterns the recall breaks down sharply at high corruption (worst 0.125000 at 64 patterns, 40% flip, 20% loss). Mean sweeps is 2.000 for nearly all low-load rows.
 
-`clean_state.csv` has a header and 1,024 rows. 1,015 of 1,024 neurons have x >= 0.999; 1,023 have y < -0.0029. The states cluster near (1, -0.003). Neuron 0 sits apart at (0.891758539329, -0.00251311502948), pulled by the reference term. The reason the y values cluster near -0.003 rather than 0 is not explained by any source file.
+`data/clean_state.csv` has a header and 1,024 rows. 1,015 of 1,024 neurons have x >= 0.999; 1,023 have y < -0.0029. The states cluster near (1, -0.003). Neuron 0 sits apart at (0.891758539329, -0.00251311502948), pulled by the reference term. The reason the y values cluster near -0.003 rather than 0 is not explained by any source file.
 
 ![Clean attractor state](docs/neuron_states.png)
 
@@ -332,7 +332,7 @@ Energy scales as -0.05 per alive neuron. The noisy max amplitude exceeds 1 durin
 
 ![Final energy by scenario](docs/robustness.png)
 
-*Figure 6 — Final energy by scenario, from `results.csv`. Lower is deeper in the attractor. Node loss raises the energy; the graph stays in one component. The editable vector source is `docs/robustness.svg`.*
+*Figure 6 — Final energy by scenario, from `data/results.csv`. Lower is deeper in the attractor. Node loss raises the energy; the graph stays in one component. The editable vector source is `docs/robustness.svg`.*
 
 ![Verification and Invariants](docs/assets/svg/04-verification-invariants.png)
 
@@ -340,15 +340,15 @@ Energy scales as -0.05 per alive neuron. The noisy max amplitude exceeds 1 durin
 
 ## 16. Build System and Integrity
 
-The build system is a 17-line `Makefile`. Variables: `CC ?= cc`, `CFLAGS ?= -std=c11 -O3 -Wall -Wextra -pedantic`, `LDLIBS ?= -lm`. Targets: `all` (generate, verify), `verify`, `generate`, `check` (runs `./verify edges.txt`), `clean` (removes verify, generate, clean_state.csv, results.csv), `capacity` (builds and runs associative). Two minor gaps: `capacity` is not in `.PHONY`, and `clean` does not remove `associative`, `capacity.csv`, or `neurons_1024.cir`.
+The build system is a 19-line `Makefile`. Variables: `CC ?= cc`, `CFLAGS ?= -std=c11 -O3 -Wall -Wextra -pedantic`, `LDLIBS ?= -lm`. Targets: `all` (generate, verify), `verify`, `generate`, `check` (runs `./bin/verify data/edges.txt`), `clean` (removes `bin/`, `data/clean_state.csv`, `data/results.csv`), `capacity` (builds and runs `bin/associative`). Two minor gaps: `capacity` is not in `.PHONY`, and `clean` does not remove `bin/associative`, `data/capacity.csv`, or `spice/neurons_1024.cir`.
 
-Reproducible workflow: `make`, then `make check` (writes `results.csv` and `clean_state.csv`), then `make capacity` (writes `capacity.csv`). The netlist regenerates byte-identically from `edges.txt` via `generate`.
+Reproducible workflow: `make`, then `make check` (writes `data/results.csv` and `data/clean_state.csv`), then `make capacity` (writes `data/capacity.csv`). The netlist regenerates byte-identically from `data/edges.txt` via `bin/generate`.
 
 `INTEGRITY_MANIFEST.txt` records the byte count, line count, and SHA-256 digest of 12 files. Recomputed digests match for 11 of 12 files. Two lines are stale: the `README.md` entry records 6,663 bytes and 60 lines (an earlier, shorter README), and line 17 reads "Circuit transient in ngspice: NOT TESTED," but the author ran the transient and verified the netlist by computation. Both lines should be corrected. The full audit ledger is `docs/source-audit-ledger.md`. The claim index is `docs/readme-claim-index.md`.
 
 ## 17. Limitations and Unresolved Questions
 
-- The `parity_check` function in `verify.c` is vacuous as written; it verifies no GF(2) incidence parity. The graph validation in `read_edges` is real.
+- The `parity_check` function in `src/verify.c` is vacuous as written; it verifies no GF(2) incidence parity. The graph validation in `read_edges` is real.
 - The Julia/R sub-README's 450/150 split and normalized RMSE claims are contradicted by the code.
 - The manifest's `README.md` entry and line 17 are stale.
 - The Quipper FSM `nextState` is partial (11 of 24 pairs undefined).
@@ -365,7 +365,7 @@ Reproducible workflow: `make`, then `make check` (writes `results.csv` and `clea
 - The YACC production and the Somatic Anchor are specification-only; no implementation is present.
 - The grounding cues (breaths, room change, phone call, timeout) are not implemented as code.
 - The netlist cap is 1 (normalized); the Verilog-A, Julia, and R cap is 1e-9.
-- `verify.c` `mask_init` never removes neuron 0; `associative.c` `mask` can remove any neuron, including neuron 0.
+- `src/verify.c` `mask_init` never removes neuron 0; `src/associative.c` `mask` can remove any neuron, including neuron 0.
 
 This is a simulation artifact, not a biological consciousness model. No quantum effect is asserted. The work is a set of models that share mathematics, not a single integrated system.
 

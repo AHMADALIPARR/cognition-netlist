@@ -11,8 +11,8 @@
 static unsigned char adj[N][N];
 static int degree[N];
 int main(int argc, char **argv) {
-    const char *in = argc > 1 ? argv[1] : "edges.txt";
-    const char *out = argc > 2 ? argv[2] : "neurons_1024.cir";
+    const char *in = argc > 1 ? argv[1] : "data/edges.txt";
+    const char *out = argc > 2 ? argv[2] : "spice/neurons_1024.cir";
     FILE *fi = fopen(in, "r");
     if (!fi) { perror(in); return 1; }
     int a,b, m=0;

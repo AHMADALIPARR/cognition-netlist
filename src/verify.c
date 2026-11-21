@@ -162,7 +162,7 @@ static int simulate(const char *label,int removed_pct,int noisy,const double *cl
     printf("%-12s alive=%4d components=%d energy=%9.4f residual=%8.5f rms_to_clean=%8.5f monotone=%s bounded=%s\n",label,alive_count,comps,prev,grad,rms,monotone?"yes":"NO",finite&&max_r<5.?"yes":"NO");
     if(noisy)printf("  max energy increase *during forcing*: %.8g (not constrained by Lyapunov test)\n",noise_energy_increase);
     if(!clean) {
-        FILE *f=fopen("clean_state.csv","w"); if(f){fputs("neuron,x,y\n",f);for(int i=0;i<N;i++)fprintf(f,"%d,%.12g,%.12g\n",i,z[2*i],z[2*i+1]);fclose(f);}
+        FILE *f=fopen("data/clean_state.csv","w"); if(f){fputs("neuron,x,y\n",f);for(int i=0;i<N;i++)fprintf(f,"%d,%.12g,%.12g\n",i,z[2*i],z[2*i+1]);fclose(f);}
     }
     return pass;
 }
@@ -170,7 +170,7 @@ int main(int argc,char **argv) {
     if(argc!=2){fprintf(stderr,"usage: %s edges.txt\n",argv[0]);return 2;}
     if(!read_edges(argv[1])||!parity_check()){fputs("topology or GF(2) parity FAIL\n",stderr);return 1;}
     printf("Topology PASS: N=%d edges=%d degree=%d; GF(2) incidence parity PASS\n",N,E,DEG);
-    FILE*out=fopen("results.csv","w");if(!out){perror("results.csv");return 2;}
+    FILE*out=fopen("data/results.csv","w");if(!out){perror("data/results.csv");return 2;}
     fputs("scenario,removed_percent,alive,components,final_energy,gradient_rms,max_amplitude,max_energy_increase_after_forcing,rms_to_clean_survivors,structural_invariants\n",out);
     /* Save baseline by a direct clean run using the same initial conditions. */
     double clean[2*N],force[2*N]={0};uint8_t alive[N];mask_init(alive,0);init(clean);
