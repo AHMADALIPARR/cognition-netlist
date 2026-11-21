@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="1200" height="900" role="img" aria-labelledby="title desc">
+<title id="title">Cognition Netlist — Complete System Atlas</title>
+<desc id="desc">A publication-quality atlas of the entire cognition-netlist-1024 system. At the center, the 1,024-neuron analog polynomial network. Around it, the four layers: mathematics, source and build, languages and runtime, and data and verification. The network diagram is schematic; the numbers, equations, and file names are taken from the repository.</desc>
+<style>
+  .bg { fill: #0d1526; }
+  .panel { fill: #16233a; stroke: #2a3a55; stroke-width: 1.5; rx: 10; }
+  .panel-math { fill: #1a2438; stroke: #3b82f6; stroke-width: 1.5; rx: 10; }
+  .panel-src { fill: #14261e; stroke: #22c55e; stroke-width: 1.5; rx: 10; }
+  .panel-lang { fill: #1c1a2e; stroke: #8b7fd4; stroke-width: 1.5; rx: 10; }
+  .panel-ver { fill: #2a2118; stroke: #f59e0b; stroke-width: 1.5; rx: 10; }
+  .title { font-family: Georgia, "Times New Roman", serif; font-size: 34px; font-weight: bold; fill: #e2e8f0; }
+  .subtitle { font-family: Arial, Helvetica, sans-serif; font-size: 14px; fill: #94a3b8; }
+  .h { font-family: Arial, Helvetica, sans-serif; font-size: 15px; font-weight: bold; fill: #e2e8f0; }
+  .t { font-family: Arial, Helvetica, sans-serif; font-size: 12px; fill: #cbd5e1; }
+  .small { font-family: Arial, Helvetica, sans-serif; font-size: 11px; fill: #94a3b8; }
+  .mono { font-family: "Courier New", Courier, monospace; font-size: 11.5px; fill: #a5f3c0; }
+  .eq { font-family: "Times New Roman", Times, serif; font-size: 15px; font-style: italic; fill: #fbbf24; }
+  .ring { stroke: #22c55e; stroke-width: 1.5; fill: none; opacity: 0.55; }
+  .spoke { stroke: #3b82f6; stroke-width: 1; opacity: 0.35; }
+  .node { fill: #3b82f6; }
+  .node-c { fill: #22c55e; }
+  .center-t { font-family: Georgia, serif; font-size: 15px; font-weight: bold; fill: #e2e8f0; }
+  .center-s { font-family: Arial, Helvetica, sans-serif; font-size: 11px; fill: #94a3b8; }
+  .cap { font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-style: italic; fill: #64748b; }
+</style>
+<rect class="bg" width="1200" height="900"/>
+<text class="title" x="600" y="52" text-anchor="middle">Cognition Netlist</text>
+<text class="subtitle" x="600" y="76" text-anchor="middle">A 1,024-neuron analog polynomial state network · complete system atlas</text>
+
+<!-- Top: mathematics -->
+<rect class="panel-math" x="40" y="100" width="1120" height="110"/>
+<text class="h" x="60" y="128">Mathematics — the governing layer</text>
+<text class="eq" x="60" y="158">C dv/dt = -a v - b v^3 + g s</text>
+<text class="eq" x="420" y="158">U(v) = 0.5 a v^2 + 0.25 b v^4 - g s v</text>
+<text class="eq" x="820" y="158">P(x) = x^4 + x + 1</text>
+<text class="t" x="60" y="186">Cubic cell · double well · equilibria -1, 0, +1 · s_crit = 2/(3 sqrt 3) = 0.38490018 · GF(2^4) · 8-regular graph, lambda_max = 5.26332 &lt; 2 sqrt 7 = 5.29150</text>
+
+<!-- Left: source and build -->
+<rect class="panel-src" x="40" y="240" width="300" height="300"/>
+<text class="h" x="60" y="268">Source and build</text>
+<text class="mono" x="60" y="294">generate.c · verify.c</text>
+<text class="mono" x="60" y="316">associative.c</text>
+<text class="t" x="60" y="340">C11 · -O3 -Wall -Wextra</text>
+<text class="t" x="60" y="360">-pedantic · -lm</text>
+<text class="mono" x="60" y="388">Makefile</text>
+<text class="t" x="60" y="410">all · check · capacity · clean</text>
+<text class="mono" x="60" y="438">edges.txt</text>
+<text class="t" x="60" y="460">4,096 edges · degree 8</text>
+<text class="mono" x="60" y="488">neurons_1024.cir</text>
+<text class="t" x="60" y="510">12,301 lines · SPICE</text>
+
+<!-- Center: the network (schematic) -->
+<rect class="panel" x="380" y="240" width="440" height="300"/>
+<text class="h" x="600" y="268" text-anchor="middle">The network — 1,024 neurons</text>
+<circle class="ring" cx="600" cy="410" r="105"/>
+<circle class="ring" cx="600" cy="410" r="70"/>
+<circle class="ring" cx="600" cy="410" r="35"/>
+<line class="spoke" x1="600" y1="410" x2="600" y2="305"/>
+<line class="spoke" x1="600" y1="410" x2="674" y2="337"/>
+<line class="spoke" x1="600" y1="410" x2="705" y2="410"/>
+<line class="spoke" x1="600" y1="410" x2="674" y2="483"/>
+<line class="spoke" x1="600" y1="410" x2="600" y2="515"/>
+<line class="spoke" x1="600" y1="410" x2="526" y2="483"/>
+<line class="spoke" x1="600" y1="410" x2="495" y2="410"/>
+<line class="spoke" x1="600" y1="410" x2="526" y2="337"/>
+<circle class="node-c" cx="600" cy="305" r="4"/>
+<circle class="node" cx="674" cy="337" r="4"/>
+<circle class="node" cx="705" cy="410" r="4"/>
+<circle class="node" cx="674" cy="483" r="4"/>
+<circle class="node" cx="600" cy="515" r="4"/>
+<circle class="node" cx="526" cy="483" r="4"/>
+<circle class="node" cx="495" cy="410" r="4"/>
+<circle class="node" cx="526" cy="337" r="4"/>
+<circle class="node-c" cx="600" cy="410" r="6"/>
+<text class="center-t" x="600" y="414" text-anchor="middle" dy="0"></text>
+<text class="cap" x="600" y="560" text-anchor="middle">Schematic only — the true graph is 8-regular on 1,024 vertices; this ring shows the idea, not the edges.</text>
+<text class="t" x="400" y="580" text-anchor="middle">z = x + i y · r = x^2 + y^2 · gain = 0.2 (1 - r) · |z| relaxes to 1</text>
+<text class="t" x="800" y="580" text-anchor="middle">1,015 of 1,024 have x &gt;= 0.999 · neuron 0 at x = 0.8918</text>
+
+<!-- Right: languages and runtime -->
+<rect class="panel-lang" x="860" y="240" width="300" height="300"/>
+<text class="h" x="880" y="268">Languages and runtime</text>
+<text class="mono" x="880" y="294">cognitive_poly.jl · .R</text>
+<text class="t" x="880" y="316">Scalar cell · RK4 · ridge</text>
+<text class="mono" x="880" y="344">verilog / verilog-a</text>
+<text class="t" x="880" y="366">GF(2^4) DAG · cubic cell</text>
+<text class="mono" x="880" y="394">AnalogWaveInterference.qs</text>
+<text class="t" x="880" y="416">Voltage to Bloch angle</text>
+<text class="mono" x="880" y="444">QuipperODELiquid.hs</text>
+<text class="t" x="880" y="466">Single-cell ODE · linear wires</text>
+<text class="mono" x="880" y="494">StateMachine.hs · .st</text>
+<text class="t" x="880" y="516">4-state panic-mode FSM</text>
+
+<!-- Bottom: data and verification -->
+<rect class="panel-ver" x="40" y="570" width="1120" height="180"/>
+<text class="h" x="60" y="598">Data and verification — the evidence layer</text>
+<text class="mono" x="60" y="626">results.csv</text>
+<text class="t" x="180" y="626">5 scenarios · all PASS · clean energy -51.1722093 · 1 component</text>
+<text class="mono" x="60" y="652">clean_state.csv</text>
+<text class="t" x="180" y="652">1,024 final states · single attractor near (1, -0.003)</text>
+<text class="mono" x="60" y="678">capacity.csv</text>
+<text class="t" x="180" y="678">105 scenarios · 1,680 trials · perfect recall to 32 patterns</text>
+<text class="mono" x="60" y="704">INTEGRITY_MANIFEST.txt</text>
+<text class="t" x="240" y="704">12 files · bytes · lines · SHA-256 · byte-identical netlist regeneration</text>
+<text class="small" x="60" y="730">This is a simulation artifact, not a biological consciousness model. No quantum effect is asserted. The Q#, Quipper, and Smalltalk modules are separate illustrations, connected to the core by naming and shared equations only.</text>
+
+<!-- Footer -->
+<text class="cap" x="600" y="790" text-anchor="middle">Cognition Netlist — 1,024-neuron analog polynomial state network · AGPL v3.0 · All claims traceable to source files in the repository.</text>
+<text class="cap" x="600" y="812" text-anchor="middle">Diagrams 01-04: system architecture · computational geometry · source-to-runtime pipeline · verification and invariants.</text>
+</svg>

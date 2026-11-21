@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 880" width="1200" height="880" role="img" aria-labelledby="title desc">
+<title id="title">Cognition Netlist — Computational Geometry</title>
+<desc id="desc">The mathematics of the cognition netlist. Left: the double-well potential of the cubic cell with stable equilibria at v = -1 and v = +1 and an unstable equilibrium at v = 0. Center: the complex plane with the unit-circle attractor |z| = 1 toward which the 1,024-neuron gradient flow relaxes. Right: the GF(2^4) polynomial and the 8-regular graph spectral bound. All equations are taken from the implementation.</desc>
+<style>
+  .bg { fill: #0d1526; }
+  .panel { fill: #16233a; stroke: #2a3a55; stroke-width: 1.5; rx: 10; }
+  .title { font-family: Arial, Helvetica, sans-serif; font-size: 28px; font-weight: bold; fill: #e2e8f0; }
+  .subtitle { font-family: Arial, Helvetica, sans-serif; font-size: 14px; fill: #94a3b8; }
+  .h { font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: bold; fill: #e2e8f0; }
+  .t { font-family: Arial, Helvetica, sans-serif; font-size: 12.5px; fill: #cbd5e1; }
+  .small { font-family: Arial, Helvetica, sans-serif; font-size: 11px; fill: #94a3b8; }
+  .mono { font-family: "Courier New", Courier, monospace; font-size: 12px; fill: #a5f3c0; }
+  .mono-big { font-family: "Courier New", Courier, monospace; font-size: 14px; fill: #a5f3c0; }
+  .eq { font-family: "Times New Roman", Times, serif; font-size: 16px; font-style: italic; fill: #fbbf24; }
+  .axis { stroke: #475569; stroke-width: 1.5; }
+  .grid { stroke: #1e293b; stroke-width: 1; }
+  .curve { stroke: #3b82f6; stroke-width: 2.5; fill: none; }
+  .circle-u { stroke: #22c55e; stroke-width: 2; fill: none; }
+  .dot { fill: #22c55e; }
+  .dot-r { fill: #ef4444; }
+  .dot-a { fill: #f59e0b; }
+  .lab { font-family: Arial, Helvetica, sans-serif; font-size: 11px; fill: #94a3b8; }
+  .lab-b { font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: bold; fill: #e2e8f0; }
+</style>
+<rect class="bg" width="1200" height="880"/>
+<text class="title" x="40" y="48">Computational Geometry — the Mathematics</text>
+<text class="subtitle" x="40" y="72">Every equation below is taken from the implementation. No invented physics.</text>
+
+<!-- LEFT: double-well potential -->
+<rect class="panel" x="40" y="100" width="560" height="330"/>
+<text class="h" x="60" y="128">Double-well potential — the cubic cell</text>
+<text class="mono" x="60" y="150">C dv/dt = -a v - b v^3 + g s</text>
+<text class="mono" x="60" y="170">U(v) = 0.5 a v^2 + 0.25 b v^4 - g s v</text>
+<text class="small" x="60" y="190">a = -1e-6 · b = 1e-6 · g = 1e-6 · C = 1e-9 · s = 0 in this plot</text>
+<!-- plot axes -->
+<line class="axis" x1="60" y1="252" x2="560" y2="252"/>
+<line class="axis" x1="310" y1="360" x2="310" y2="130"/>
+<!-- gridlines -->
+<line class="grid" x1="60" y1="325.3" x2="560" y2="325.3"/>
+<text class="lab" x="566" y="256">U = 0</text>
+<text class="lab" x="566" y="329">U = -0.25</text>
+<text class="lab" x="60" y="375">v = -1.6</text>
+<text class="lab" x="300" y="375">v = 0</text>
+<text class="lab" x="540" y="375">v = +1.6</text>
+<!-- the curve -->
+<path class="curve" d="M 60.0,146.9 L 75.6,210.8 L 91.2,257.7 L 106.9,290.4 L 122.5,311.1 L 138.1,322.1 L 153.8,325.3 L 169.4,322.7 L 185.0,315.8 L 200.6,306.3 L 216.2,295.3 L 231.9,284.1 L 247.5,273.6 L 263.1,264.6 L 278.8,257.7 L 294.4,253.5 L 310.0,252.0 L 325.6,253.5 L 341.2,257.7 L 356.9,264.6 L 372.5,273.6 L 388.1,284.1 L 403.8,295.3 L 419.4,306.3 L 435.0,315.8 L 450.6,322.7 L 466.2,325.3 L 481.9,322.1 L 497.5,311.1 L 513.1,290.4 L 528.8,257.7 L 544.4,210.8 L 560.0,146.9"/>
+<!-- equilibria -->
+<circle class="dot" cx="153.8" cy="325.3" r="5"/>
+<text class="lab-b" x="140" y="345">v = -1</text>
+<text class="lab" x="140" y="360">stable · J = -2000</text>
+<circle class="dot-r" cx="310" cy="252" r="5"/>
+<text class="lab-b" x="300" y="240">v = 0</text>
+<text class="lab" x="300" y="225">unstable · J = +1000</text>
+<circle class="dot" cx="466.2" cy="325.3" r="5"/>
+<text class="lab-b" x="452" y="345">v = +1</text>
+<text class="lab" x="452" y="360">stable · J = -2000</text>
+<text class="t" x="60" y="400">Fold (saddle-node) threshold: s_crit = 2 / (3 sqrt 3) = 0.38490018</text>
+<text class="small" x="60" y="420">Nominal form: dv/dt = 1000 (v - v^3 + s) · equilibria at v = -1, 0, +1 · Jacobians 1000 (1 - 3v^2)</text>
+
+<!-- CENTER-RIGHT: complex plane / unit circle -->
+<rect class="panel" x="640" y="100" width="520" height="330"/>
+<text class="h" x="660" y="128">Complex plane — the 1,024-neuron attractor</text>
+<circle class="circle-u" cx="900" cy="270" r="95"/>
+<line class="axis" x1="780" y1="270" x2="1020" y2="270"/>
+<line class="axis" x1="900" y1="150" x2="900" y2="390"/>
+<text class="lab" x="1005" y="265">Re z</text>
+<text class="lab" x="905" y="150">Im z</text>
+<circle class="dot" cx="995" cy="270" r="5"/>
+<text class="lab-b" x="980" y="255">(1, 0)</text>
+<circle class="dot-a" cx="995" cy="273" r="3"/>
+<circle class="dot-a" cx="990" cy="268" r="3"/>
+<circle class="dot-a" cx="993" cy="275" r="3"/>
+<text class="t" x="660" y="410">|z| = 1 · gain = 0.2 (1 - r) · r = x^2 + y^2</text>
+<text class="small" x="660" y="428">1,015 of 1,024 neurons have x &gt;= 0.999 · 1,023 have y &lt; -0.0029 · neuron 0 sits apart at x = 0.8918</text>
+
+<!-- BOTTOM LEFT: graph + spectral -->
+<rect class="panel" x="40" y="460" width="560" height="210"/>
+<text class="h" x="60" y="488">The graph — 8-regular, 1,024 vertices</text>
+<text class="mono-big" x="60" y="516">N = 1024 · degree 8 · edges 4096</text>
+<text class="t" x="60" y="542">Adjacency eigenvalues (computed from edges.txt):</text>
+<text class="mono" x="60" y="566">lambda_1 = 8.000000 (trivial) · lambda_2 = 5.25756776</text>
+<text class="mono" x="60" y="590">max |lambda| nontrivial = 5.26332069</text>
+<text class="mono" x="60" y="614">Ramanujan bound 2 sqrt(7) = 5.29150262</text>
+<text class="small" x="60" y="638">5.26332 &lt; 5.29150, so the sampled spectrum satisfies</text>
+<text class="small" x="60" y="654">the numerical Ramanujan criterion. Empirical check, not a proof.</text>
+
+<!-- BOTTOM RIGHT: GF(2^4) -->
+<rect class="panel" x="640" y="460" width="520" height="210"/>
+<text class="h" x="660" y="488">Finite field — GF(2^4)</text>
+<text class="mono-big" x="660" y="516">P(x) = x^4 + x + 1</text>
+<text class="t" x="660" y="542">Carry-less product, 7 bits, reduced mod P(x):</text>
+<text class="mono" x="660" y="566">x^4 = x + 1 · x^5 = x^2 + x · x^6 = x^3 + x^2</text>
+<text class="mono" x="660" y="590">y0 = p0^p4 · y1 = p1^p4^p5</text>
+<text class="mono" x="660" y="614">y2 = p2^p5^p6 · y3 = p3^p6</text>
+<text class="small" x="660" y="638">Node: out = (in0 ^ in1 ^ in2) * coeff in GF(2^4) · topology C_8(1,4)</text>
+
+<!-- BOTTOM: governing equations strip -->
+<rect class="panel" x="40" y="680" width="1120" height="160"/>
+<text class="h" x="60" y="708">Governing equations of the network</text>
+<text class="eq" x="60" y="740">C dx/dt = -alpha x - beta x (x^2 + y^2) + coupling</text>
+<text class="eq" x="60" y="768">C dy/dt = -alpha y - beta y (x^2 + y^2) + coupling</text>
+<text class="t" x="60" y="796">alpha = -0.2 · beta = 0.2 · Gc = 0.04 · 1/Gc = 25 ohm</text>
+<text class="eq" x="640" y="740">E = sum [0.5 alpha r + 0.25 beta r^2]</text>
+<text class="eq" x="640" y="768">+ sum 0.5 Gc |z_a - z_b|^2 + 0.5 Gref |z_0 - REF|^2</text>
+<text class="t" x="640" y="796">Lyapunov energy · gradient flow dz/dt = -grad E</text>
+<text class="t" x="640" y="814">REF = 0.2 · Gref = 0.1</text>
+<text class="small" x="60" y="822">RK4, DT = 0.05, 2,400 steps, t = 120 · Hopfield: W_ij = (1/N) sum_m xi^m xj^m, i not equal j · energy E = -(sum_m overlap_m^2 - p * live) / (2N)</text>
+</svg>

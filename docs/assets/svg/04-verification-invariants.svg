@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 880" width="1200" height="880" role="img" aria-labelledby="title desc">
+<title id="title">Cognition Netlist — Verification and Invariants</title>
+<desc id="desc">Formal verification diagram. Preconditions, invariants, and observed results for each check in the repository, with the exact numbers from results.csv and capacity.csv, and the known gaps stated plainly. Green means the check passed as written; amber means the check is partial, unrecorded, or contradicted by the source.</desc>
+<style>
+  .bg { fill: #0d1526; }
+  .panel { fill: #16233a; stroke: #2a3a55; stroke-width: 1.5; rx: 10; }
+  .panel-ok { fill: #14261e; stroke: #22c55e; stroke-width: 1.5; rx: 10; }
+  .panel-warn { fill: #2a2118; stroke: #f59e0b; stroke-width: 1.5; rx: 10; }
+  .title { font-family: Arial, Helvetica, sans-serif; font-size: 28px; font-weight: bold; fill: #e2e8f0; }
+  .subtitle { font-family: Arial, Helvetica, sans-serif; font-size: 14px; fill: #94a3b8; }
+  .h { font-family: Arial, Helvetica, sans-serif; font-size: 15px; font-weight: bold; fill: #e2e8f0; }
+  .t { font-family: Arial, Helvetica, sans-serif; font-size: 12px; fill: #cbd5e1; }
+  .small { font-family: Arial, Helvetica, sans-serif; font-size: 11px; fill: #94a3b8; }
+  .mono { font-family: "Courier New", Courier, monospace; font-size: 11.5px; fill: #a5f3c0; }
+  .ok { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 13px; font-weight: bold; fill: #22c55e; }
+  .warn { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 13px; font-weight: bold; fill: #f59e0b; }
+  .th { font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: bold; fill: #94a3b8; }
+  .cell { font-family: "Courier New", Courier, monospace; font-size: 11px; fill: #cbd5e1; }
+</style>
+<rect class="bg" width="1200" height="880"/>
+<text class="title" x="40" y="48">Verification and Invariants</text>
+<text class="subtitle" x="40" y="72">What is checked, what passed, and where the gaps are. Every number below is from the repository.</text>
+
+<!-- Invariants strip -->
+<rect class="panel" x="40" y="100" width="1120" height="120"/>
+<text class="h" x="60" y="128">Invariants that must hold</text>
+<text class="mono" x="60" y="154">degree(v) = 8 for every vertex · edges = 4096 · components = 1 · energy non-increasing after forcing</text>
+<text class="mono" x="60" y="178">max |z| &lt; 5 · |z| relaxes toward 1 · overlap energy non-increasing per sweep (tolerance 1e-6)</text>
+<text class="small" x="60" y="202">Precondition: edges.txt is 8-regular, no self-loops, no duplicates, exactly 4,096 edges. Postcondition: all five verify.c scenarios PASS and the Hopfield benchmark completes 1,680 runs.</text>
+
+<!-- verify.c results table -->
+<rect class="panel-ok" x="40" y="250" width="560" height="220"/>
+<text class="h" x="60" y="278">verify.c — structural invariant suite</text>
+<text class="ok" x="60" y="300">&#10003; make check PASS — all 5 scenarios</text>
+<text class="th" x="60" y="326">scenario</text>
+<text class="th" x="180" y="326">alive</text>
+<text class="th" x="260" y="326">final energy</text>
+<text class="th" x="400" y="326">grad rms</text>
+<text class="th" x="500" y="326">max|z|</text>
+<text class="cell" x="60" y="348">clean</text>
+<text class="cell" x="180" y="348">1024</text>
+<text class="cell" x="260" y="348">-51.1722093</text>
+<text class="cell" x="400" y="348">3.47e-08</text>
+<text class="cell" x="500" y="348">0.9999985</text>
+<text class="cell" x="60" y="370">noisy</text>
+<text class="cell" x="180" y="370">1024</text>
+<text class="cell" x="260" y="370">-51.1722094</text>
+<text class="cell" x="400" y="370">1.39e-08</text>
+<text class="cell" x="500" y="370">1.0496983</text>
+<text class="cell" x="60" y="392">loss_5pct</text>
+<text class="cell" x="180" y="392">973</text>
+<text class="cell" x="260" y="392">-48.6224451</text>
+<text class="cell" x="400" y="392">3.56e-08</text>
+<text class="cell" x="500" y="392">0.9999989</text>
+<text class="cell" x="60" y="414">loss_10pct</text>
+<text class="cell" x="180" y="414">922</text>
+<text class="cell" x="260" y="414">-46.0724478</text>
+<text class="cell" x="400" y="414">4.32e-08</text>
+<text class="cell" x="500" y="414">0.9999994</text>
+<text class="cell" x="60" y="436">loss_20pct</text>
+<text class="cell" x="180" y="436">820</text>
+<text class="cell" x="260" y="436">-40.9724517</text>
+<text class="cell" x="400" y="436">1.41e-07</text>
+<text class="cell" x="500" y="436">0.9999995</text>
+<text class="small" x="60" y="460">Energy scales as -0.05 per alive neuron. Noisy max|z| 1.0497 exceeds 1 during forcing, then relaxes.</text>
+
+<!-- associative results -->
+<rect class="panel-ok" x="640" y="250" width="520" height="220"/>
+<text class="h" x="660" y="278">associative.c — Hopfield capacity</text>
+<text class="ok" x="660" y="300">&#10003; make capacity PASS — 105 scenarios, 1,680 trials</text>
+<text class="th" x="660" y="326">patterns</text>
+<text class="th" x="810" y="326">worst recall</text>
+<text class="th" x="960" y="326">worst bit acc.</text>
+<text class="cell" x="660" y="348">1 - 32</text>
+<text class="cell" x="810" y="348">1.000000</text>
+<text class="cell" x="960" y="348">1.000000</text>
+<text class="cell" x="660" y="370">32 · f40 · l20</text>
+<text class="cell" x="810" y="370">0.937500</text>
+<text class="cell" x="960" y="370">0.984146</text>
+<text class="cell" x="660" y="392">64 · f40 · l0</text>
+<text class="cell" x="810" y="392">0.187500</text>
+<text class="cell" x="960" y="392">0.754822</text>
+<text class="cell" x="660" y="414">64 · f40 · l20</text>
+<text class="cell" x="810" y="414">0.125000</text>
+<text class="cell" x="960" y="414">0.705412</text>
+<text class="small" x="660" y="440">Perfect recall holds to 32 patterns. At 64 patterns the memory breaks down sharply at high corruption.</text>
+
+<!-- Other checks -->
+<rect class="panel-ok" x="40" y="500" width="560" height="150"/>
+<text class="h" x="60" y="528">Other checks that pass as written</text>
+<text class="t" x="60" y="554">Verilog testbench: syndrome 0 with no fault, non-zero with a 1-node fault. Two scenarios only.</text>
+<text class="t" x="60" y="578">Julia / R: PASS printed to stdout. Train RMSE on the same 600 rows. No split, no normalized RMSE.</text>
+<text class="t" x="60" y="602">Netlist: regenerated byte-identically by generate.c. SPICE transient run by the author in ngspice.</text>
+<text class="t" x="60" y="626">Graph: independently verified 8-regular, 0 vertices with degree not equal to 8.</text>
+
+<!-- Gaps -->
+<rect class="panel-warn" x="640" y="500" width="520" height="150"/>
+<text class="h" x="660" y="528">Gaps and contradictions — stated, not hidden</text>
+<text class="warn" x="660" y="552">&#9888; verify.c parity_check is vacuous</text>
+<text class="t" x="660" y="574">(1u ^ 1u) is always 0, so it never checks GF(2) incidence parity.</text>
+<text class="warn" x="660" y="596">&#9888; Julia/R README 450/150 split is false</text>
+<text class="t" x="660" y="618">Code trains on all 600 rows and reports raw train RMSE. No split, no normalization.</text>
+<text class="t" x="660" y="640">Manifest line 17 still says "NOT TESTED" for the ngspice transient; that line is stale.</text>
+
+<!-- Proof obligations -->
+<rect class="panel" x="40" y="680" width="1120" height="160"/>
+<text class="h" x="60" y="708">Proof obligations — what is not proven here</text>
+<text class="t" x="60" y="734">The sampled spectral bound (5.26332 &lt; 2 sqrt 7) is an empirical numerical check, not an exact Ramanujan proof. The graph is a seeded random regular graph, not a provably Ramanujan construction.</text>
+<text class="t" x="60" y="758">Liquid Haskell refinements in QuipperODELiquid.hs are declared annotations. No Liquid Haskell output or certificate is in the repository, so the no-cloning rejection is not demonstrated here.</text>
+<text class="t" x="60" y="782">The Quipper FSM nextState is partial: undefined (state, event) pairs have no clause and would fail at runtime. The Smalltalk FSM handles them by doing nothing.</text>
+<text class="t" x="60" y="806">The Verilog-A DAG syndrome implements LSB parity for unit coefficients only, while its header describes the general c1*c2 parity. The Verilog-A testbench has no automated pass verdict.</text>
+<text class="small" x="60" y="830">Nothing in this repository is a biological consciousness model, and no quantum effect is asserted. The work is a simulation artifact and a set of cross-language models.</text>
+</svg>

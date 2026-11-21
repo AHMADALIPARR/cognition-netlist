@@ -1,0 +1,165 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 880" width="1200" height="880" role="img" aria-labelledby="title desc">
+<title id="title">Cognition Netlist — System Architecture</title>
+<desc id="desc">Architectural map of the cognition-netlist-1024 repository. The C11 core, SPICE netlist, and data files form the connected computational core. Julia, R, Verilog, Verilog-A, Q#, Quipper, and Smalltalk are separate modules linked to the core by naming and shared equations only, not by data flow. Solid arrows are real data flow; dashed lines are naming-only relationships.</desc>
+<style>
+  .bg { fill: #0d1526; }
+  .panel { fill: #16233a; stroke: #2a3a55; stroke-width: 1.5; rx: 10; }
+  .panel-core { fill: #1a2b45; stroke: #3b82f6; stroke-width: 2; rx: 10; }
+  .panel-data { fill: #14261e; stroke: #22c55e; stroke-width: 1.5; rx: 10; }
+  .panel-sat { fill: #1c1a2e; stroke: #8b7fd4; stroke-width: 1.5; rx: 10; }
+  .panel-build { fill: #2a2118; stroke: #f59e0b; stroke-width: 1.5; rx: 10; }
+  .title { font-family: Arial, Helvetica, sans-serif; font-size: 28px; font-weight: bold; fill: #e2e8f0; }
+  .subtitle { font-family: Arial, Helvetica, sans-serif; font-size: 14px; fill: #94a3b8; }
+  .h { font-family: Arial, Helvetica, sans-serif; font-size: 15px; font-weight: bold; fill: #e2e8f0; }
+  .h2 { font-family: Arial, Helvetica, sans-serif; font-size: 12px; font-weight: bold; fill: #cbd5e1; }
+  .t { font-family: Arial, Helvetica, sans-serif; font-size: 12px; fill: #cbd5e1; }
+  .mono { font-family: "Courier New", Courier, monospace; font-size: 11.5px; fill: #a5f3c0; }
+  .mono-dim { font-family: "Courier New", Courier, monospace; font-size: 11px; fill: #94a3b8; }
+  .small { font-family: Arial, Helvetica, sans-serif; font-size: 11px; fill: #94a3b8; }
+  .arrow { stroke: #3b82f6; stroke-width: 2; fill: none; marker-end: url(#ah); }
+  .arrow-g { stroke: #22c55e; stroke-width: 2; fill: none; marker-end: url(#ahg); }
+  .dash { stroke: #8b7fd4; stroke-width: 1.5; stroke-dasharray: 6 4; fill: none; }
+  .note { font-family: Arial, Helvetica, sans-serif; font-size: 12px; fill: #fbbf24; }
+  .legend-box { fill: #111c30; stroke: #2a3a55; stroke-width: 1; rx: 8; }
+</style>
+<defs>
+  <marker id="ah" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#3b82f6"/></marker>
+  <marker id="ahg" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#22c55e"/></marker>
+</defs>
+<rect class="bg" width="1200" height="880"/>
+<text class="title" x="40" y="48">Cognition Netlist — System Architecture</text>
+<text class="subtitle" x="40" y="72">1,024-neuron analog polynomial state network · deterministic C11 reference · GF(2^4) digital layer · multi-language ports</text>
+
+<!-- Data input: edges.txt -->
+<rect class="panel-data" x="40" y="100" width="240" height="96"/>
+<text class="h" x="56" y="126">Graph input</text>
+<text class="mono" x="56" y="148">edges.txt</text>
+<text class="t" x="56" y="168">4,096 undirected edges</text>
+<text class="t" x="56" y="186">1,024 vertices · degree 8</text>
+
+<!-- C11 core -->
+<rect class="panel-core" x="330" y="100" width="420" height="210"/>
+<text class="h" x="350" y="126">C11 computational core</text>
+<text class="mono" x="350" y="150">generate.c</text>
+<text class="t" x="470" y="150">validates 8-regular graph</text>
+<text class="t" x="470" y="168">emits SPICE netlist</text>
+<text class="mono" x="350" y="196">verify.c</text>
+<text class="t" x="470" y="196">RK4 gradient flow · 2,400 steps</text>
+<text class="t" x="470" y="214">5 scenarios · energy, components</text>
+<text class="mono" x="350" y="242">associative.c</text>
+<text class="t" x="470" y="242">binary Hopfield · 105 scenarios</text>
+<text class="t" x="470" y="260">1,680 trials · Hebbian, no diagonal</text>
+<text class="small" x="350" y="290">State z[2N]: x = real, y = imaginary · N = 1024</text>
+
+<!-- SPICE netlist -->
+<rect class="panel-core" x="800" y="100" width="360" height="150"/>
+<text class="h" x="820" y="126">Analog network (SPICE)</text>
+<text class="mono" x="820" y="150">neurons_1024.cir</text>
+<text class="t" x="820" y="172">12,301 lines · 2,048 capacitors</text>
+<text class="t" x="820" y="192">2,048 behavioral current sources</text>
+<text class="t" x="820" y="212">8,194 resistors · .tran 0.1 40</text>
+<text class="small" x="820" y="236">C dx/dt = -a x - b x (x^2+y^2) + coupling</text>
+
+<!-- Data outputs -->
+<rect class="panel-data" x="330" y="340" width="420" height="130"/>
+<text class="h" x="350" y="366">Reference results (produced by verify.c)</text>
+<text class="mono" x="350" y="390">results.csv</text>
+<text class="t" x="470" y="390">5 scenarios · all PASS</text>
+<text class="mono" x="350" y="414">clean_state.csv</text>
+<text class="t" x="470" y="414">1,024 final (x, y) states</text>
+<text class="mono" x="350" y="438">capacity.csv</text>
+<text class="t" x="470" y="438">105 Hopfield scenarios · 1,680 trials</text>
+<text class="small" x="350" y="460">Final clean energy -51.1722093 · 1 component · max|z| 0.999998496</text>
+
+<!-- Unlambda witnesses -->
+<rect class="panel-data" x="800" y="280" width="360" height="90"/>
+<text class="h" x="820" y="306">Retrieval witnesses</text>
+<text class="mono" x="820" y="330">retrieval_true.unl · retrieval_false.unl</text>
+<text class="t" x="820" y="352">Minimal Unlambda decision witnesses</text>
+<text class="t" x="820" y="368">true prints T · false prints F</text>
+
+<!-- Julia / R -->
+<rect class="panel-sat" x="40" y="340" width="240" height="130"/>
+<text class="h" x="56" y="366">Julia / R scalar ports</text>
+<text class="mono" x="56" y="390">cognitive_poly.jl · .R</text>
+<text class="t" x="56" y="412">Single cubic cell · RK4</text>
+<text class="t" x="56" y="432">Ridge regression · n = 600</text>
+<text class="t" x="56" y="452">Train RMSE on same 600 rows</text>
+
+<!-- Verilog / Verilog-A -->
+<rect class="panel-sat" x="800" y="400" width="360" height="172"/>
+<text class="h" x="820" y="426">Verilog / Verilog-A digital layer</text>
+<text class="mono" x="820" y="450">verilog/gf_topological_dag.v</text>
+<text class="t" x="820" y="470">8-node GF(2^4) DAG · C_8(1,4)</text>
+<text class="mono" x="820" y="494">verilog-a/gf_topological_dag.va</text>
+<text class="t" x="820" y="514">Continuous-time GF(2^4) · tanh bits</text>
+<text class="mono" x="820" y="538">verilog-a/cognitive_poly_cell.va</text>
+<text class="t" x="820" y="558">Single cubic cell · KCL · double well</text>
+
+<!-- Q# -->
+<rect class="panel-sat" x="40" y="500" width="240" height="110"/>
+<text class="h" x="56" y="526">Q# demonstration</text>
+<text class="mono" x="56" y="550">AnalogWaveInterference.qs</text>
+<text class="t" x="56" y="572">Voltage to Bloch angle · Ry</text>
+<text class="t" x="56" y="592">Ramsey interferometer · F2 parity</text>
+
+<!-- Quipper -->
+<rect class="panel-sat" x="330" y="500" width="200" height="132"/>
+<text class="h" x="350" y="526">Quipper</text>
+<text class="mono" x="350" y="550">QuipperODELiquid.hs</text>
+<text class="t" x="350" y="572">Single-cell ODE · linear wires</text>
+<text class="mono" x="350" y="594">StateMachine.hs</text>
+<text class="t" x="350" y="616">4-state FSM · 2-qubit codes</text>
+
+<!-- Smalltalk -->
+<rect class="panel-sat" x="560" y="500" width="190" height="110"/>
+<text class="h" x="580" y="526">Smalltalk</text>
+<text class="mono" x="580" y="550">StateMachine.st</text>
+<text class="t" x="580" y="572">4-state FSM · deferred buffer</text>
+<text class="t" x="580" y="592">Drain on SYNC · log</text>
+
+<!-- Spec -->
+<rect class="panel-sat" x="800" y="580" width="360" height="80"/>
+<text class="h" x="820" y="606">Panic-mode specification</text>
+<text class="mono" x="820" y="630">spec/transitions.md</text>
+<text class="t" x="820" y="650">7 transitions · 4 states · grounding cues</text>
+
+<!-- Build + integrity -->
+<rect class="panel-build" x="40" y="640" width="710" height="128"/>
+<text class="h" x="56" y="666">Build and integrity</text>
+<text class="mono" x="56" y="690">Makefile</text>
+<text class="t" x="150" y="690">all · check · capacity · clean · -std=c11 -O3 -Wall -Wextra -pedantic -lm</text>
+<text class="mono" x="56" y="714">INTEGRITY_MANIFEST.txt</text>
+<text class="t" x="230" y="714">12 files · bytes · lines · SHA-256</text>
+<text class="small" x="56" y="738">Note: manifest line 17 still reads "Circuit transient in ngspice: NOT TESTED" and is stale.</text>
+<text class="small" x="56" y="754">The author ran the transient and verified the netlist by computation.</text>
+
+<!-- Figures -->
+<rect class="panel-data" x="800" y="690" width="360" height="78"/>
+<text class="h" x="820" y="716">Figures (docs/)</text>
+<text class="t" x="820" y="738">neuron_states · robustness</text>
+<text class="t" x="820" y="756">panic_mode_states · panic_mode_cycle</text>
+
+<!-- Arrows: real data flow -->
+<path class="arrow" d="M 280 150 L 325 150"/>
+<path class="arrow" d="M 280 175 L 325 190"/>
+<path class="arrow" d="M 750 160 L 795 160"/>
+<path class="arrow-g" d="M 540 315 L 540 335"/>
+<path class="arrow-g" d="M 750 200 L 795 320"/>
+<path class="arrow" d="M 395 640 L 395 620"/>
+
+<!-- Dashed: naming-only -->
+<path class="dash" d="M 280 400 L 325 555"/>
+<path class="dash" d="M 750 470 L 755 495"/>
+<path class="dash" d="M 560 555 L 795 620"/>
+<path class="dash" d="M 655 610 L 820 620"/>
+
+<!-- Legend -->
+<rect class="legend-box" x="40" y="780" width="1120" height="70"/>
+<text class="h2" x="56" y="806">How to read this diagram</text>
+<path class="arrow" d="M 56 822 L 110 822"/>
+<text class="t" x="120" y="826">Real data flow (file is read or written)</text>
+<path class="dash" d="M 420 822 L 474 822"/>
+<text class="t" x="484" y="826">Naming or shared-equation link only — no file I/O, no shared data</text>
+<text class="note" x="56" y="844">The Q#, Quipper, and Smalltalk modules are not connected to the analog network by data or code. They reuse the cell equations and the FSM specification by name and by comment only.</text>
+</svg>

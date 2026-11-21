@@ -1,0 +1,149 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 880" width="1200" height="880" role="img" aria-labelledby="title desc">
+<title id="title">Cognition Netlist — Source-to-Runtime Pipeline</title>
+<desc id="desc">How the implementation moves from source to computation. The graph input feeds two C11 paths: generate.c emits the SPICE netlist for ngspice, and verify.c runs the RK4 gradient flow to produce results and clean-state records. associative.c runs the Hopfield benchmark. Julia, R, Verilog, Verilog-A, Q#, Quipper, and Smalltalk are separate runtimes with their own entry points and outputs. Verification checkpoints are marked with a check.</desc>
+<style>
+  .bg { fill: #0d1526; }
+  .panel { fill: #16233a; stroke: #2a3a55; stroke-width: 1.5; rx: 10; }
+  .panel-src { fill: #14261e; stroke: #22c55e; stroke-width: 1.5; rx: 10; }
+  .panel-build { fill: #2a2118; stroke: #f59e0b; stroke-width: 1.5; rx: 10; }
+  .panel-run { fill: #1a2b45; stroke: #3b82f6; stroke-width: 1.5; rx: 10; }
+  .panel-out { fill: #1c1a2e; stroke: #8b7fd4; stroke-width: 1.5; rx: 10; }
+  .title { font-family: Arial, Helvetica, sans-serif; font-size: 28px; font-weight: bold; fill: #e2e8f0; }
+  .subtitle { font-family: Arial, Helvetica, sans-serif; font-size: 14px; fill: #94a3b8; }
+  .h { font-family: Arial, Helvetica, sans-serif; font-size: 15px; font-weight: bold; fill: #e2e8f0; }
+  .t { font-family: Arial, Helvetica, sans-serif; font-size: 12px; fill: #cbd5e1; }
+  .small { font-family: Arial, Helvetica, sans-serif; font-size: 11px; fill: #94a3b8; }
+  .mono { font-family: "Courier New", Courier, monospace; font-size: 11.5px; fill: #a5f3c0; }
+  .stage { font-family: Arial, Helvetica, sans-serif; font-size: 13px; font-weight: bold; fill: #fbbf24; letter-spacing: 2px; }
+  .arrow { stroke: #3b82f6; stroke-width: 2; fill: none; marker-end: url(#ah); }
+  .arrow-g { stroke: #22c55e; stroke-width: 2; fill: none; marker-end: url(#ahg); }
+  .check { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 13px; font-weight: bold; fill: #22c55e; }
+</style>
+<defs>
+  <marker id="ah" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#3b82f6"/></marker>
+  <marker id="ahg" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#22c55e"/></marker>
+</defs>
+<rect class="bg" width="1200" height="880"/>
+<text class="title" x="40" y="48">Source-to-Runtime Pipeline</text>
+<text class="subtitle" x="40" y="72">From source files to running computation, with the verification checkpoint at each stage.</text>
+
+<!-- Stage labels -->
+<text class="stage" x="40" y="110">SOURCE</text>
+<text class="stage" x="340" y="110">BUILD</text>
+<text class="stage" x="600" y="110">RUNTIME</text>
+<text class="stage" x="900" y="110">OUTPUT / CHECKPOINT</text>
+
+<!-- Row 1: SPICE path -->
+<rect class="panel-src" x="40" y="130" width="220" height="80"/>
+<text class="mono" x="56" y="158">edges.txt</text>
+<text class="t" x="56" y="180">4,096 edges · 1,024 vertices</text>
+<text class="t" x="56" y="198">degree 8 · sorted (a, b)</text>
+<rect class="panel-build" x="340" y="130" width="220" height="80"/>
+<text class="mono" x="356" y="158">generate.c</text>
+<text class="t" x="356" y="180">cc -std=c11 -O3</text>
+<text class="t" x="356" y="198">validates · emits netlist</text>
+<rect class="panel-run" x="600" y="130" width="220" height="80"/>
+<text class="mono" x="616" y="158">neurons_1024.cir</text>
+<text class="t" x="616" y="180">12,301 lines · ngspice</text>
+<text class="t" x="616" y="198">.tran 0.1 40 uic</text>
+<rect class="panel-out" x="900" y="130" width="260" height="80"/>
+<text class="check" x="916" y="158">&#10003; Transient run by the author</text>
+<text class="t" x="916" y="180">Netlist verified by computation</text>
+<text class="small" x="916" y="198">.save records neurons 0-3 only</text>
+<path class="arrow" d="M 260 170 L 335 170"/>
+<path class="arrow" d="M 560 170 L 595 170"/>
+<path class="arrow-g" d="M 820 170 L 895 170"/>
+
+<!-- Row 2: verify path -->
+<rect class="panel-src" x="40" y="240" width="220" height="80"/>
+<text class="mono" x="56" y="268">edges.txt</text>
+<text class="t" x="56" y="290">same graph input</text>
+<text class="t" x="56" y="308">read again, validated again</text>
+<rect class="panel-build" x="340" y="240" width="220" height="80"/>
+<text class="mono" x="356" y="268">verify.c</text>
+<text class="t" x="356" y="290">cc -std=c11 -O3 -lm</text>
+<text class="t" x="356" y="308">RK4 · DT 0.05 · 2,400 steps</text>
+<rect class="panel-run" x="600" y="240" width="220" height="80"/>
+<text class="mono" x="616" y="268">./verify edges.txt</text>
+<text class="t" x="616" y="290">5 scenarios · clean / noisy</text>
+<text class="t" x="616" y="308">loss 5 / 10 / 20 pct</text>
+<rect class="panel-out" x="900" y="240" width="260" height="80"/>
+<text class="check" x="916" y="268">&#10003; make check PASS</text>
+<text class="mono" x="916" y="290">results.csv · clean_state.csv</text>
+<text class="t" x="916" y="308">Final clean energy -51.1722093</text>
+<path class="arrow" d="M 260 280 L 335 280"/>
+<path class="arrow" d="M 560 280 L 595 280"/>
+<path class="arrow-g" d="M 820 280 L 895 280"/>
+
+<!-- Row 3: associative path -->
+<rect class="panel-src" x="40" y="350" width="220" height="80"/>
+<text class="mono" x="56" y="378">associative.c</text>
+<text class="t" x="56" y="400">No input file</text>
+<text class="t" x="56" y="418">Random patterns, seeded</text>
+<rect class="panel-build" x="340" y="350" width="220" height="80"/>
+<text class="mono" x="356" y="378">associative</text>
+<text class="t" x="356" y="400">cc -std=c11 -O3 -lm</text>
+<text class="t" x="356" y="418">make capacity</text>
+<rect class="panel-run" x="600" y="350" width="220" height="80"/>
+<text class="mono" x="616" y="378">./associative</text>
+<text class="t" x="616" y="400">105 scenarios · 16 trials</text>
+<text class="t" x="616" y="418">1,680 runs · 24 sweeps max</text>
+<rect class="panel-out" x="900" y="350" width="260" height="80"/>
+<text class="check" x="916" y="378">&#10003; make capacity PASS</text>
+<text class="mono" x="916" y="400">capacity.csv</text>
+<text class="t" x="916" y="418">Perfect recall to 32 patterns</text>
+<path class="arrow" d="M 260 390 L 335 390"/>
+<path class="arrow" d="M 560 390 L 595 390"/>
+<path class="arrow-g" d="M 820 390 L 895 390"/>
+
+<!-- Row 4: Julia / R -->
+<rect class="panel-src" x="40" y="460" width="220" height="80"/>
+<text class="mono" x="56" y="488">cognitive_poly.jl</text>
+<text class="mono" x="56" y="508">cognitive_poly.R</text>
+<text class="t" x="56" y="528">Stdlib / base R only</text>
+<rect class="panel-build" x="340" y="460" width="220" height="80"/>
+<text class="mono" x="356" y="488">julia · Rscript</text>
+<text class="t" x="356" y="508">No build step</text>
+<text class="t" x="356" y="528">No input files</text>
+<rect class="panel-run" x="600" y="460" width="220" height="80"/>
+<text class="mono" x="616" y="488">RK4 · hysteresis sweep</text>
+<text class="t" x="616" y="508">Ridge, n = 600, lambda 1e-4</text>
+<text class="t" x="616" y="528">h = 1e-5 · 2,000 steps per s</text>
+<rect class="panel-out" x="900" y="460" width="260" height="80"/>
+<text class="check" x="916" y="488">&#10003; PASS printed to stdout</text>
+<text class="t" x="916" y="508">Train RMSE on same 600 rows</text>
+<text class="small" x="916" y="528">No 450/150 split · no normalized RMSE</text>
+<path class="arrow" d="M 260 500 L 335 500"/>
+<path class="arrow" d="M 560 500 L 595 500"/>
+<path class="arrow-g" d="M 820 500 L 895 500"/>
+
+<!-- Row 5: Verilog / Verilog-A / Q# / Quipper / Smalltalk -->
+<rect class="panel-src" x="40" y="570" width="220" height="80"/>
+<text class="mono" x="56" y="598">gf_topological_dag.v</text>
+<text class="mono" x="56" y="618">*.va · *.qs · *.hs · *.st</text>
+<text class="t" x="56" y="638">Separate runtimes</text>
+<rect class="panel-build" x="340" y="570" width="220" height="80"/>
+<text class="mono" x="356" y="598">iverilog / simulator</text>
+<text class="t" x="356" y="618">dotnet · ghc / cabal</text>
+<text class="t" x="356" y="638">Smalltalk image</text>
+<rect class="panel-run" x="600" y="570" width="220" height="80"/>
+<text class="mono" x="616" y="598">tb_gf_topological_dag</text>
+<text class="t" x="616" y="618">tb_cognitive_poly_cell</text>
+<text class="t" x="616" y="638">Q# Main · FSM circuits</text>
+<rect class="panel-out" x="900" y="570" width="260" height="80"/>
+<text class="check" x="916" y="598">&#10003; Verilog: syndrome checks</text>
+<text class="t" x="916" y="618">Verilog-A: probes, no verdict</text>
+<text class="t" x="916" y="638">Q# / Quipper / Smalltalk: no log</text>
+<path class="arrow" d="M 260 610 L 335 610"/>
+<path class="arrow" d="M 560 610 L 595 610"/>
+<path class="arrow-g" d="M 820 610 L 895 610"/>
+
+<!-- Memory note -->
+<rect class="panel" x="40" y="680" width="1120" height="160"/>
+<text class="h" x="60" y="708">Memory and representation</text>
+<text class="t" x="60" y="734">verify.c state z[2N]: z[2i] = x_i, z[2i+1] = y_i · edges in ea[E], eb[E] · alive[N] mask · force[2N]</text>
+<text class="t" x="60" y="758">associative.c patterns mem = malloc(64*N) int8_t · overlaps ov = malloc(64 * sizeof int32_t) · state = malloc(N)</text>
+<text class="t" x="60" y="782">generate.c adjacency adj[N][N] unsigned char · degree[N] · netlist written line by line, no in-memory netlist</text>
+<text class="t" x="60" y="806">No shared memory or file format links the C core to Julia, R, Verilog, Q#, Quipper, or Smalltalk. Each runtime reads its own constants.</text>
+<text class="small" x="60" y="830">Build: make all (generate, verify) · make check (./verify edges.txt) · make capacity (build + run associative) · make clean (removes verify, generate, clean_state.csv, results.csv)</text>
+</svg>
