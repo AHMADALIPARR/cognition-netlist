@@ -1,6 +1,6 @@
 # Source Audit Ledger
 
-This ledger records the source inspection performed for the README monograph of `cognition-netlist-1024`. It records, for every tracked file, the SHA-256 digest, the byte count, the line count, the reading completion, and the findings. It is the audit trail for the README.
+This ledger records the source inspection performed for the grounded README of `cognition-netlist-1024`. It records, for every tracked file, the SHA-256 digest, the byte count, the line count, the reading completion, and the findings. It is the audit trail for the README.
 
 ## Audit parameters
 
@@ -10,7 +10,7 @@ This ledger records the source inspection performed for the README monograph of 
 - **Files inspected:** 36 tracked files, 854,342 bytes total (prior README). The five new SVG illustrations and their PNG renders in `docs/assets/svg/` are additional.
 - **Inspection method:** Four independent readers, one per domain (C core + netlist + data; Julia/R; Q#/Quipper/Smalltalk; Verilog/Verilog-A/Unlambda/SVGs). Each reader read its assigned text files in full and verified line numbers by grep. The generated files (`neurons_1024.cir`, `edges.txt`, `clean_state.csv`) were inspected structurally: header, sample, footer, and counts, not pasted in full. The hand-written sources (approximately 1,700 lines total) were read in full.
 - **Reading completion:** Recorded honestly per file. "Full" means every line was read. "Structural" means the file was inspected by header, sample, footer, and counts. "Binary" means the file was identified by format and metadata only; binary content was never claimed as read text.
-- **README.md note:** The README.md digest below is the NEW README (117,365 bytes, 768 lines) produced by this audit. The prior README at HEAD 3737689 was 63,398 bytes and 4,543 lines. The prior README was read in full as part of the inspection and reconciled against the sources.
+- **README.md note:** The README.md digest below is the grounded README (30,100 bytes, 395 lines, 4,324 words) produced by this audit. It replaces an earlier 17,923-word monograph (commit 9c02356) that padded to reach a 10,000-word target the sources do not support. The prior README at HEAD 3737689 was 63,398 bytes and 4,543 lines; it was read in full as part of the inspection and reconciled against the sources.
 
 ## Passes
 
@@ -45,14 +45,15 @@ The audit was performed in ten passes, as specified in the mission. The passes a
 - **Findings:** Variables CC, CFLAGS (-std=c11 -O3 -Wall -Wextra -pedantic), LDLIBS (-lm). Targets: all, check, clean, verify, generate, capacity. Gaps: `capacity` is not in .PHONY; `clean` does not remove `associative`, `capacity.csv`, or `neurons_1024.cir`.
 - **README claims:** Chapters 3, 19, 23, 24, 25.
 
-### README.md (prior version, at HEAD 3737689)
+### README.md (grounded version, this audit)
 
-- **SHA-256:** (prior version; superseded by the new README produced by this audit)
-- **Bytes:** 63,398
-- **Lines:** 4,543
-- **Reading completion:** Full
-- **Findings:** The prior README was the restored full README with PNG embeds. It correctly credited the author's SPICE and Liquid Haskell testing and framed the work as a simulation artifact with an empirical (not proven) Ramanujan spectral check. It contained the eigenvalue numbers (5.26332 vs 2 sqrt 7) which do not appear in any source file; those numbers were verified by computation from `edges.txt` for the new README. The new README replaces it.
-- **README claims:** Reconciled in Chapters 1-26.
+- **SHA-256:** c99ceb4aac9936370d0e3731377ea8835397ee892cc5523767901cbf89862d9a
+- **Bytes:** 30,100
+- **Lines:** 395
+- **Words:** 4,324
+- **Reading completion:** Full (written from the inspection; every claim traceable to a source)
+- **Findings:** This README replaces an earlier 17,923-word monograph (commit 9c02356) that padded to reach a 10,000-word target the sources do not support. The grounded version is 4,324 words, which is the length the sources actually support without invention. It uses the repository's real root paths (verify.c, generate.c, associative.c, results.csv, clean_state.csv, capacity.csv), not the src/ and data/ paths from a remote revision that moved the files. It states the path discrepancy explicitly. It credits the author's SPICE and Liquid Haskell testing and flags the stale manifest lines.
+- **README claims:** Chapters 1-17.
 
 ### associative.c
 
